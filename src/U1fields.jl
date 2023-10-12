@@ -14,6 +14,11 @@ function randomize!(U1ws::U1)
     return nothing
 end
 
+function coldstart!(U1ws::U1)
+    U1ws.U .= one(complex(U1ws.PRC))
+    return nothing
+end
+
 # ======================= #
 # ===== U1 Quenched ===== #
 # ======================= #
