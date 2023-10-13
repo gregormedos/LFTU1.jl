@@ -1,6 +1,6 @@
 import LFTSampling: action
 
-KernelAbstractions.@kernel function U1plaquette!(plx, U, Nx, Ny)
+KernelAbstractions.@kernel function U1plaquette!(plx, U, Nx, Ny, ::Type{BC}) where BC <: AbstractBoundaryCondition
 
     i1, i2 = @index(Global, NTuple)
 
@@ -11,6 +11,12 @@ KernelAbstractions.@kernel function U1plaquette!(plx, U, Nx, Ny)
                       U[iu1,i2,2] *
                       conj(U[i1,iu2,1] *
                            U[i1,i2,2]))
+
+    if BC == OpenBC
+        if i1 == Nx || i2 == Ny
+            plx[i1, i2] = zero(eltype(plx))
+        end
+    end
     
 end
 
@@ -34,24 +40,32 @@ end
 
 function gauge_force!(U1ws::U1, hmcws::AbstractHMC)
     lp = U1ws.params
-    event = U1quenchedforce!(U1ws.device)(hmcws.frc1, hmcws.frc2, U1ws.U, lp.beta, lp.iL[1], lp.iL[2], ndrange=(lp.iL[1], lp.iL[2]), workgroupsize=U1ws.kprm.threads)
+    event = U1quenchedforce!(U1ws.device)(hmcws.frc1, hmcws.frc2, U1ws.U, lp.beta, lp.iL[1], lp.iL[2], lp.BC, ndrange=(lp.iL[1], lp.iL[2]), workgroupsize=U1ws.kprm.threads)
     wait(event)
     return nothing
 end
 
-KernelAbstractions.@kernel function U1quenchedforce!(frc1, frc2, U, beta, Nx, Ny)
+KernelAbstractions.@kernel function U1quenchedforce!(frc1, frc2, U, beta, Nx, Ny, ::Type{BC}) where BC <: AbstractBoundaryCondition
     
     i1, i2 = @index(Global, NTuple)
 
     iu1 = mod(i1, Nx) + 1
     iu2 = mod(i2, Ny) + 1
 
+
     v = beta * imag(U[i1,i2,1] * U[iu1,i2,2] * conj(U[i1,iu2,1] * U[i1,i2,2]))
-    
+
+    if BC == OpenBC
+        if i1 == Nx || i2 == Ny
+            v = zero(eltype(v))
+        end
+    end
+
     frc1[i1,i2,1]  = -v 
     frc1[i1,i2,2]  =  v 
     frc2[iu1,i2,2] = -v 
     frc2[i1,iu2,1] =  v 
+
 end
 
 action(U1ws::U1Quenched, hmcws::AbstractHMC) = gauge_action(U1ws)
@@ -61,17 +75,22 @@ gauge_action(U1ws::U1) = U1quenchedaction(U1ws)
 
 function U1quenchedaction(U1ws::U1)
     lp = U1ws.params
-    return U1quenchedaction(U1ws.U, lp.beta, lp.iL[1], lp.iL[2], U1ws.device, U1ws.kprm.threads, U1ws.kprm.blocks)
+    return U1quenchedaction(U1ws.U, lp.beta, lp.iL[1], lp.iL[2], lp.BC, U1ws.device, U1ws.kprm.threads, U1ws.kprm.blocks)
 end
 
-function U1quenchedaction(U, beta, Nx, Ny, device, threads, blocks)
+function U1quenchedaction(U, beta, Nx, Ny, BC, device, threads, blocks)
     plaquettes = to_device(device, zeros(Float64, Nx, Ny))
-    return U1quenchedaction(plaquettes, U, beta, Nx, Ny, device, threads, blocks)
+    return U1quenchedaction(plaquettes, U, beta, Nx, Ny, BC, device, threads, blocks)
 end
 
-function U1quenchedaction(plaquettes, U, beta, Nx, Ny, device, threads, blocks)
-    event = U1plaquette!(device)(plaquettes, U, Nx, Ny, ndrange=(Nx, Ny), workgroupsize=threads)
+function U1quenchedaction(plaquettes, U, beta, Nx, Ny, BC, device, threads, blocks)
+    event = U1plaquette!(device)(plaquettes, U, Nx, Ny, BC, ndrange=(Nx, Ny), workgroupsize=threads)
     wait(event)
+
+    if BC == OpenBC
+        Nx = Nx - 1
+        Ny = Ny - 1
+    end
     S = beta * ( Nx * Ny - reduce(+, plaquettes) )
 
     return S

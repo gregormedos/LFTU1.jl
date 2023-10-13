@@ -44,7 +44,7 @@ struct U1quenchedworkspace{T, A <: AbstractArray} <: U1Quenched
     end
 end
 
-function (s::Type{U1Quenched})(::Type{T}; device = CUDAKernels.CUDADevice(), kwargs...) where {T <: AbstractFloat}
+function (s::Type{U1Quenched})(::Type{T}; device = KernelAbstractions.CPU(), kwargs...) where {T <: AbstractFloat}
     lp = U1QuenchedParm(;kwargs...)
     return U1quenchedworkspace(T, lp, device, KernelParm(lp))
 end

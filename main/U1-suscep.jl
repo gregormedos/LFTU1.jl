@@ -7,11 +7,19 @@ using LFTU1
 
 import KernelAbstractions: CPU
 
-beta = 5.0
-lsize = 20
-device = CPU()
+import CUDAKernels: CUDADevice
 
-model = U1Quenched(Float64, beta = beta, iL = (lsize, lsize), device = device)
+beta = 5.555
+lsize = 4
+# device = CPU()
+# device = CUDADevice()
+
+model = U1Quenched(Float64,
+                   beta = beta,
+                   iL = (lsize, lsize),
+                   BC = LFTU1.OpenBC,
+                   # device = device
+                  )
 
 sampler = HMC(
               integrator = Leapfrog(1.0, 10),
@@ -22,13 +30,14 @@ samplerws = LFTSampling.sampler(model, sampler)
 LFTU1.randomize!(model)
 
 @time sample!(model, samplerws)
+
 top_charge(model)
 
 Qs = Vector{Float64}()
 
 Ss = Vector{Float64}()
 
-for i in 1:100000
+for i in 1:10000
     # print(i)
     sample!(model, samplerws)
     # Q = top_charge(model)
@@ -37,11 +46,11 @@ for i in 1:100000
 end
 
 
-using ADerrors, Plots
+using ADerrors
 
 histogram(Qs)
 
-ID = "test3"
+ID = "test"
 
 uwQ2s = uwreal(Qs.^2, ID)
 
@@ -51,8 +60,12 @@ uwQ2s
 
 uwS = uwreal(Ss, ID)
 
-uwP = 1 - uwS/(model.params.beta*model.params.iL[1]^2)
+uwP = 1 - uwS/(model.params.beta*(model.params.iL[1]-1)^2)
 uwerr(uwP)
 uwP
 
-0.89338(7)
+uwW = -log(uwP)
+uwerr(uwW)
+uwW
+
+"0.89338(7)"
