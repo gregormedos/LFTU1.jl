@@ -79,7 +79,7 @@ function U1quenchedaction(U1ws::U1)
 end
 
 function U1quenchedaction(U, beta, Nx, Ny, BC, device, threads, blocks)
-    plaquettes = to_device(device, zeros(Float64, Nx, Ny))
+    plaquettes = to_device(device, zeros(real(eltype(U)), Nx, Ny))
     return U1quenchedaction(plaquettes, U, beta, Nx, Ny, BC, device, threads, blocks)
 end
 

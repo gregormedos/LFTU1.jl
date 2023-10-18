@@ -10,22 +10,18 @@ import KernelAbstractions: CPU
 import CUDAKernels: CUDADevice
 
 beta = 5.555
-lsize = 4
+lsize = 64
 # device = CPU()
 # device = CUDADevice()
 
 model = U1Quenched(Float64,
                    beta = beta,
                    iL = (lsize, lsize),
-                   BC = LFTU1.OpenBC,
+                   BC = OpenBC,
                    # device = device
                   )
 
-sampler = HMC(
-              integrator = Leapfrog(1.0, 10),
-             )
-
-samplerws = LFTSampling.sampler(model, sampler)
+samplerws = LFTSampling.sampler(model, HMC(integrator = Leapfrog(1.0, 20)))
 
 LFTU1.randomize!(model)
 

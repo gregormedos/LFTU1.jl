@@ -32,21 +32,26 @@ Allocates all the necessary fields for a HMC simulation of a U(1) model:
 - `U`: ``U`` gauge field.
 - `frc`
 """
-struct U1quenchedworkspace{T, A <: AbstractArray} <: U1Quenched
-    PRC::Type{T}
+struct U1quenchedworkspace{T1, A <: AbstractArray} <: U1Quenched
+    PRC::Type{T1}
     U::A
     params::U1QuenchedParm
     device#::Union{KernelAbstractions.Device, ROCKernels.ROCDevice}
     kprm::KernelParm
-    function U1quenchedworkspace(::Type{T}, lp::U1Parm, device, kprm) where {T <: AbstractFloat}
-        U = to_device(device, ones(complex(T), lp.iL..., 2))
-        return new{T, typeof(U)}(T, U, lp, device, kprm)
-    end
 end
 
-function (s::Type{U1Quenched})(::Type{T}; device = KernelAbstractions.CPU(), kwargs...) where {T <: AbstractFloat}
+function (s::Type{U1Quenched})(::Type{T1}, ::Type{T2} = complex(T1); custom_init = nothing, device = KernelAbstractions.CPU(), kwargs...) where {T1, T2}
     lp = U1QuenchedParm(;kwargs...)
-    return U1quenchedworkspace(T, lp, device, KernelParm(lp))
+    return U1quenchedworkspace(T1, T2, lp, device, KernelParm(lp); custom_init = custom_init)
+end
+
+function U1quenchedworkspace(::Type{T1}, ::Type{T2}, lp::U1Parm, device, kprm; custom_init = nothing) where {T1,T2}
+    if custom_init == nothing
+        U = to_device(device, ones(T2, lp.iL..., 2))
+    else
+        U = custom_init
+    end
+    return U1quenchedworkspace{T1, typeof(U)}(T1, U, lp, device, kprm)
 end
 
 struct U1quenchedHMC{A <: AbstractArray} <: AbstractHMC
