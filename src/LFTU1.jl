@@ -5,7 +5,7 @@ using LFTSampling
 using KernelAbstractions
 import Random
 import BDIO
-import CUDA, CUDAKernels
+# import CUDA, CUDAKernels
 
 abstract type U1 <: AbstractLFT end
 abstract type U1Quenched <: U1 end
@@ -45,14 +45,14 @@ export Hamiltonian, generate_momenta!, update_fields!, U1_update_field!, update_
 
 include("U1io.jl")
 
-to_device(::CUDAKernels.CUDADevice, x) = CUDA.CuArray(x)
+# to_device(::CUDAKernels.CUDADevice, x) = CUDA.CuArray(x)
 # to_device(::ROCKernels.ROCDevice, x) = AMDGPU.ROCArray(x)
 to_device(::KernelAbstractions.CPU, x) = x
 
 allowscalar(::KernelAbstractions.CPU) = nothing
 disallowscalar(::KernelAbstractions.CPU) = nothing
-allowscalar(::CUDAKernels.CUDADevice) = CUDA.allowscalar(true)
-disallowscalar(::CUDAKernels.CUDADevice) = CUDA.allowscalar(false)
+# allowscalar(::CUDAKernels.CUDADevice) = CUDA.allowscalar(true)
+# disallowscalar(::CUDAKernels.CUDADevice) = CUDA.allowscalar(false)
 # allowscalar(::ROCKernels.ROCDevice) = AMDGPU.allowscalar(true)
 # disallowscalar(::ROCKernels.ROCDevice) = AMDGPU.allowscalar(false)
 
