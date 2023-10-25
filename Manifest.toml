@@ -2,7 +2,7 @@
 
 julia_version = "1.9.0"
 manifest_format = "2.0"
-project_hash = "af3302712bf10405f67ec72cfb7783e7d2de9c00"
+project_hash = "e2bc1c2222c311f79e748832cfd14f0ac7899e4f"
 
 [[deps.ANSIColoredPrinters]]
 git-tree-sha1 = "574baf8110975760d391c710b6341da1afa48d8c"
@@ -203,8 +203,8 @@ uuid = "63c18a36-062a-441e-b654-da1e3ab1ce7c"
 version = "0.8.6"
 
 [[deps.LFTSampling]]
-deps = ["Distributions", "Git", "Random"]
-git-tree-sha1 = "d82c579a4203bd44df8e17b63e9f459b7cde3145"
+deps = ["Distributions", "Git", "LinearAlgebra", "Random"]
+git-tree-sha1 = "7e1b3bc58f7ed6b2bdd1ee88b92daf4c51406bd7"
 repo-rev = "main"
 repo-url = "https://github.com/dalbandea/LFTSampling.jl"
 uuid = "01beebb5-6b54-40b6-b312-fac6d2d10d07"

@@ -1,4 +1,4 @@
-import LFTSampling: copy!, sampler
+import LFTSampling: copy!, sampler, AbstractSolver
 
 # ======================= #
 # ===== General U1 ====== #
@@ -71,3 +71,51 @@ end
 
 sampler(lftws::U1Quenched, hmcp::HMCParams) = U1quenchedHMC(lftws, hmcp)
 
+
+# ======================= #
+# ====== U1 Nf = 2 ====== #
+# ======================= #
+
+struct U1Nf2workspace{T, A <: AbstractArray, S <: AbstractSolver} <: U1Nf2
+    PRC::Type{T}
+    U::A
+    params::U1Nf2Parm
+    device#::Union{KernelAbstractions.Device, ROCKernels.ROCDevice}
+    kprm::KernelParm
+    sws::S
+    function U1Nf2workspace(::Type{T}, lp::U1Nf2Parm, device, kprm, maxiter::Int64 = 10000,
+            tol::Float64 = 1e-14) where {T <: AbstractFloat}
+        U = to_device(device, ones(complex(T), lp.iL..., 2))
+        sws = CG(maxiter, tol, U)
+        return new{T, typeof(U), typeof(sws)}(T, U, lp, device, kprm, sws)
+    end
+end
+
+function (s::Type{U1Nf2})(::Type{T}; device = KernelAbstractions.CPU(), maxiter::Int64 = 10000, tol::Float64 = 1e-14, kwargs...) where {T <: AbstractFloat}
+    lp = U1Nf2Parm(;kwargs...)
+    return U1Nf2workspace(T, lp, device, KernelParm(lp), maxiter, tol)
+end
+
+struct U1Nf2HMC{A1 <: AbstractArray, A2 <: AbstractArray} <: AbstractHMC
+    params::HMC
+    X::A1
+    F::A1
+    g5DX::A1
+    frc1::A2 # gauge force
+    frc2::A2 # gauge force
+    pfrc::A2 # pf force
+    mom::A2
+end
+
+function U1Nf2HMC(u1ws::U1Nf2, hmcp::HMCParams)
+    X = similar(u1ws.U)
+    F = similar(u1ws.U)
+    g5DX = similar(u1ws.U)
+    frc1 = to_device(u1ws.device, zeros(u1ws.PRC, u1ws.params.iL..., 2))
+    frc2 = similar(frc1)
+    pfrc = similar(frc1)
+    mom = similar(frc1)
+    return U1Nf2HMC{typeof(X), typeof(frc1)}(hmcp, X, F, g5DX, frc1, frc2, pfrc, mom)
+end
+
+sampler(lftws::U1Nf2, hmcp::HMCParams) = U1Nf2HMC(lftws, hmcp)

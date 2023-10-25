@@ -113,3 +113,31 @@ function U1topcharge(plaquettes, U, beta, Nx, Ny, device, threads, blocks)
     return Q
 end
 
+
+# ======================= #
+# ====== U1 Nf = 2 ====== #
+# ======================= #
+
+
+action(U1ws::U1Nf2, hmcws::AbstractHMC) = gauge_action(U1ws) + pfaction(U1ws, hmcws)
+
+function pfaction(U1ws::U1Nf2, hmcws::AbstractHMC)
+    invert!(hmcws.X, gamm5Dw_sqr_msq!, hmcws.F, U1ws.sws, U1ws)
+    return real(LinearAlgebra.dot(hmcws.X, hmcws.F))
+end
+
+function force!(U1ws::U1Nf2, hmcws::AbstractHMC)
+	# Solve DX = F for X
+    iter = invert!(hmcws.X, gamm5Dw_sqr_msq!, hmcws.F, U1ws.sws, U1ws)
+
+	# Apply gamm5D to X
+    gamm5Dw!(hmcws.g5DX, hmcws.X, U1ws)
+	
+	# Get fermion part of the force in U1ws.pfrc
+    pf_force!(U1ws, hmcws)
+
+	# Get gauge part of the force in U1ws.frc1 and U1ws.frc2
+    gauge_force!(U1ws, hmcws)
+
+    return nothing
+end
