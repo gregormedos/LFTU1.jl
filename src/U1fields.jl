@@ -83,17 +83,22 @@ struct U1Nf2workspace{T, A <: AbstractArray, S <: AbstractSolver} <: U1Nf2
     device#::Union{KernelAbstractions.Device, ROCKernels.ROCDevice}
     kprm::KernelParm
     sws::S
-    function U1Nf2workspace(::Type{T}, lp::U1Nf2Parm, device, kprm, maxiter::Int64 = 10000,
-            tol::Float64 = 1e-14) where {T <: AbstractFloat}
-        U = to_device(device, ones(complex(T), lp.iL..., 2))
-        sws = CG(maxiter, tol, U)
-        return new{T, typeof(U), typeof(sws)}(T, U, lp, device, kprm, sws)
-    end
 end
 
-function (s::Type{U1Nf2})(::Type{T}; device = KernelAbstractions.CPU(), maxiter::Int64 = 10000, tol::Float64 = 1e-14, kwargs...) where {T <: AbstractFloat}
+function U1Nf2workspace(::Type{T1}, ::Type{T2}, lp::U1Nf2Parm, device, kprm, maxiter::Int64 = 10000,
+        tol::Float64 = 1e-14; custom_init = nothing) where {T1, T2}
+    if custom_init == nothing
+        U = to_device(device, ones(T2, lp.iL..., 2))
+    else
+        U = custom_init
+    end
+    sws = CG(maxiter, tol, U)
+    return U1Nf2workspace{T1, typeof(U), typeof(sws)}(T1, U, lp, device, kprm, sws)
+end
+
+function (s::Type{U1Nf2})(::Type{T1}, ::Type{T2} = complex(T1); custom_init = nothing, device = KernelAbstractions.CPU(), maxiter::Int64 = 10000, tol::Float64 = 1e-14, kwargs...) where {T1, T2}
     lp = U1Nf2Parm(;kwargs...)
-    return U1Nf2workspace(T, lp, device, KernelParm(lp), maxiter, tol)
+    return U1Nf2workspace(T1, T2, lp, device, KernelParm(lp), maxiter, tol, custom_init = custom_init)
 end
 
 struct U1Nf2HMC{A1 <: AbstractArray, A2 <: AbstractArray} <: AbstractHMC
