@@ -6,7 +6,6 @@ using KernelAbstractions
 import Random
 import BDIO
 import LinearAlgebra
-# import CUDA, CUDAKernels
 
 abstract type U1 <: AbstractLFT end
 abstract type U1Quenched <: U1 end
@@ -58,16 +57,10 @@ include("U1io.jl")
 include("U1dirac.jl")
 export gamm5Dw!, gamm5Dw_sqr_msq!
 
-# to_device(::CUDAKernels.CUDADevice, x) = CUDA.CuArray(x)
-# to_device(::ROCKernels.ROCDevice, x) = AMDGPU.ROCArray(x)
 to_device(::KernelAbstractions.CPU, x) = x
 
 allowscalar(::KernelAbstractions.CPU) = nothing
 disallowscalar(::KernelAbstractions.CPU) = nothing
-# allowscalar(::CUDAKernels.CUDADevice) = CUDA.allowscalar(true)
-# disallowscalar(::CUDAKernels.CUDADevice) = CUDA.allowscalar(false)
-# allowscalar(::ROCKernels.ROCDevice) = AMDGPU.allowscalar(true)
-# disallowscalar(::ROCKernels.ROCDevice) = AMDGPU.allowscalar(false)
 
 # Glossary of variable name meanings
 
