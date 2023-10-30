@@ -5,3 +5,6 @@ using LFTU1
     include("u1nf2tests.jl")
 end
 
+@testset verbose = true "U1 I/O" begin
+    include("iotests.jl")
+end
