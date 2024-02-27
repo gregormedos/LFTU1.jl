@@ -46,6 +46,6 @@ end
 end
 
 @testset verbose = true "HMC force" begin
-    ΔF = LFTSampling.force_test(model, hmcws, 1e-5)
+    ΔF = LFTSampling.force_test(model, hmcws, 1e-7)
     @test isapprox(zero(model.PRC), ΔF, atol = 1e-5)
 end

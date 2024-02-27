@@ -34,7 +34,7 @@ function gamm5Dw!(so, si, U1ws::U1Nf2)
     event = U1gamm5Dw!(U1ws.device)(so, U1ws.U, si, lp.am0, lp.iL[1],
                                   lp.iL[2], ndrange=(lp.iL[1], lp.iL[2]),
                                   workgroupsize=U1ws.kprm.threads)
-    wait(event)
+    synchronize(U1ws.device)
     return nothing
 end
 
@@ -179,7 +179,7 @@ function pf_force!(U1ws::U1Nf2, hmcws::AbstractHMC)
                                     lp.iL[1], lp.iL[2], 
                                     ndrange=(lp.iL[1], lp.iL[2]),
                                     workgroupsize=U1ws.kprm.threads)
-    wait(event)
+    synchronize(U1ws.device)
     return nothing
 end
 

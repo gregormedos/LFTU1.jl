@@ -41,7 +41,7 @@ end
 function gauge_force!(U1ws::U1, hmcws::AbstractHMC)
     lp = U1ws.params
     event = U1quenchedforce!(U1ws.device)(hmcws.frc1, hmcws.frc2, U1ws.U, lp.beta, lp.iL[1], lp.iL[2], lp.BC, ndrange=(lp.iL[1], lp.iL[2]), workgroupsize=U1ws.kprm.threads)
-    wait(event)
+    synchronize(U1ws.device)
     return nothing
 end
 
@@ -85,7 +85,7 @@ end
 
 function U1quenchedaction(plaquettes, U, beta, Nx, Ny, BC, device, threads, blocks)
     event = U1plaquette!(device)(plaquettes, U, Nx, Ny, BC, ndrange=(Nx, Ny), workgroupsize=threads)
-    wait(event)
+    synchronize(device)
 
     if BC == OpenBC
         Nx = Nx - 1
@@ -108,7 +108,7 @@ end
 
 function U1topcharge(plaquettes, U, beta, Nx, Ny, device, threads, blocks)
     event = U1qtop!(device)(plaquettes, U, Nx, Ny, ndrange=(Nx, Ny), workgroupsize=threads)
-    wait(event)
+    synchronize(U1ws.device)
     Q = reduce(+, plaquettes) / (2.0*pi)
     return Q
 end
