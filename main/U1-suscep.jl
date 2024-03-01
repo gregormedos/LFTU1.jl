@@ -12,13 +12,13 @@ import CUDAKernels: CUDADevice
 beta = 5.555
 lsize = 64
 # device = CPU()
-# device = CUDADevice()
+device = CUDADevice()
 
 model = U1Quenched(Float64,
                    beta = beta,
                    iL = (lsize, lsize),
                    BC = OpenBC,
-                   # device = device
+                   device = device
                   )
 
 samplerws = LFTSampling.sampler(model, HMC(integrator = Leapfrog(1.0, 20)))

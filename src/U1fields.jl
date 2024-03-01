@@ -51,7 +51,7 @@ function U1quenchedworkspace(::Type{T1}, ::Type{T2}, lp::U1Parm, device, kprm; c
     else
         U = custom_init
     end
-    return U1quenchedworkspace{T1, typeof(U)}(T1, U, lp, device, kprm)
+    return U1quenchedworkspace{T1, typeof(U)}(T1, U, lp, KernelAbstractions.get_backend(U), kprm)
 end
 
 struct U1quenchedHMC{A <: AbstractArray} <: AbstractHMC
@@ -93,7 +93,7 @@ function U1Nf2workspace(::Type{T1}, ::Type{T2}, lp::U1Nf2Parm, device, kprm, max
         U = custom_init
     end
     sws = CG(maxiter, tol, U)
-    return U1Nf2workspace{T1, typeof(U), typeof(sws)}(T1, U, lp, device, kprm, sws)
+    return U1Nf2workspace{T1, typeof(U), typeof(sws)}(T1, U, lp, KernelAbstractions.get_backend(U), kprm, sws)
 end
 
 function (s::Type{U1Nf2})(::Type{T1}, ::Type{T2} = complex(T1); custom_init = nothing, device = KernelAbstractions.CPU(), maxiter::Int64 = 10000, tol::Float64 = 1e-14, kwargs...) where {T1, T2}

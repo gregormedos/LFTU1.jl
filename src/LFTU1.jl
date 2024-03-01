@@ -69,6 +69,10 @@ disallowscalar(::KernelAbstractions.CPU) = nothing
 # allowscalar(::ROCKernels.ROCDevice) = AMDGPU.allowscalar(true)
 # disallowscalar(::ROCKernels.ROCDevice) = AMDGPU.allowscalar(false)
 
+if !isdefined(Base, :get_extension)
+  include("../ext/LFTU1CUDAExt.jl")
+end
+
 # Glossary of variable name meanings
 
 # ws = workspace

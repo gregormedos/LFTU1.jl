@@ -3,6 +3,12 @@ uuid = "c5346ad7-8abe-4d7d-905f-653b6e0abc8c"
 authors = ["dalbandea <albandeadavid@gmail.com>"]
 version = "0.1.0"
 
+[extensions]
+LFTU1CUDAExt = "CUDA"
+
+[weakdeps]
+CUDA = "052768ef-5323-5732-b1bb-66c8b64840ba"
+
 [deps]
 BDIO = "375f315e-f2c4-11e9-2ef9-134f02f79e27"
 KernelAbstractions = "63c18a36-062a-441e-b654-da1e3ab1ce7c"
