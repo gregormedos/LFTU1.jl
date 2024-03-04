@@ -111,3 +111,81 @@ function update_momenta!(U1ws::U1Nf2, epsilon, hmcws::AbstractHMC)
 
 	return nothing
 end
+
+
+# ======================= #
+# ======== U1 Nf ======== #
+# ======================= #
+
+
+function flip_momenta_sign!(hmcws::U1NfHMC)
+    hmcws.mom .= .- hmcws.mom
+    return nothing
+end
+
+
+function generate_pseudofermions!(U1ws::U1Nf, hmcws::AbstractHMC)
+    lp = U1ws.params
+    N_fermions = length(U1ws.params.am0)
+
+    hmcws.g5DX .= to_device(U1ws.device, zeros(complex(U1ws.PRC), lp.iL[1], lp.iL[2], 2))
+
+    hpf_ini = zero(U1ws.PRC)
+
+    # Fill array of N_fermions pseudofermion fields and complete initial Hamiltonian
+    for j in 1:N_fermions
+        hmcws.X .= to_device(U1ws.device, randn(complex(U1ws.PRC), lp.iL[1], lp.iL[2], 2))
+        hpf_ini += mapreduce(x -> abs2(x), +, hmcws.X)
+        generate_pseudofermion!(hmcws.F[j], U1ws.params.am0[j], U1ws.rprm[j], U1ws, hmcws)
+    end
+    return hpf_ini
+end
+
+
+"""
+    generate_pseudofermion(F, am0, rprm::RHMCParm, U1ws::U1Nf, hmcws::AbstractHMC)
+
+Obtain pseudofermion from a random field `X` given the RHMC parameters `rprm`.
+Equivalent to ``A_{k,l}`` operator in Lüscher eq. (3.8).
+"""
+function generate_pseudofermion!(F, am0, rprm::RHMCParm, U1ws::U1Nf, hmcws::AbstractHMC)
+    # S_pf =  ϕ† ∏( (D†D + μᵢ²)⁻¹ (D†D + νᵢ²) ) ϕ = X† X
+    # ϕ = ∏( (γD + iνᵢ)⁻¹(γD + iμᵢ) ) X  if X is random normal.
+    F .= hmcws.X
+    for i in 1:rprm.n
+        # ϕⱼ = (γD+iμ)X = (γD+iμ)ϕⱼ
+        aux_F = copy(F)
+        gamm5Dw!(F, aux_F, am0, U1ws)
+        F .= F .+ im*rprm.mu[i] .* aux_F
+        # ϕⱼ = (D†D+ν²)⁻¹ϕⱼ
+        aux_F .= F
+        # CG(F, U, aux_F, am0, rprm.nu[i], CGmaxiter, CGtol, gamm5Dw_sqr_musq, prm, kprm)
+        iter = invert!(F, gamm5Dw_sqr_musq_am0_mu!(am0, rprm.nu[i]), aux_F, U1ws.sws, U1ws)
+        # ϕⱼ = (γD-iν)ϕⱼ
+        aux_F .= F
+        gamm5Dw!(F, aux_F, am0, U1ws)
+        F .= F .- im*rprm.nu[i] .* aux_F
+    end
+end
+
+
+"""
+    MultiCG(so, U, si, am0, maxiter, eps, A, rprm, prm, kprm)
+
+Applies the partial fraction decomposition of  rational approximation ``R(A) =
+A^{-1/2}`` without constant factors (as opposed to function `R`) to the field
+`si`, storing it in `so`, with `A` an operator. Used for pseudofermion-field
+generation, see Luscher eq. (3.9)
+"""
+function MultiCG(so, si, am0, rprm::RHMCParm, U1ws::U1)
+	aux = similar(so)
+	so .= si  # this accounts for identity in partial fraction descomposition
+	for j in 1:rprm.n
+        iter = invert!(aux, gamm5Dw_sqr_musq_am0_mu!(am0, rprm.mu[j]), si, U1ws.sws, U1ws)
+		so .= so .+ rprm.rho[j]*aux
+	end
+
+    return nothing
+end
+
+

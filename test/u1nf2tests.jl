@@ -1,20 +1,5 @@
-using LFTSampling
-using LFTU1
 using LinearAlgebra
 
-
-import LFTSampling: analytic_force, infinitesimal_transformation, get_field
-function analytic_force(u1ws::LFTU1.U1Nf2, hmcws::LFTU1.U1Nf2HMC)
-    LFTU1.force!(u1ws, hmcws)
-    frc = hmcws.frc1 .+ hmcws.frc2 .+ hmcws.pfrc
-    return frc
-end
-
-function infinitesimal_transformation(field_elem, epsilon, lftws2::LFTU1.U1)
-    return field_elem * exp(im*epsilon)
-end
-
-get_field(u1ws::LFTU1.U1Nf2) = u1ws.U
 
 # U1 Theory parameters
 lsize = 8

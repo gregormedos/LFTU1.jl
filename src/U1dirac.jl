@@ -49,6 +49,29 @@ function gamm5Dw_sqr_msq!(so, tmp, si, U1ws::U1Nf2)
     return nothing
 end
 
+function gamm5Dw!(so, si, am0, U1ws::U1Nf)
+    lp = U1ws.params
+    event = U1gamm5Dw!(U1ws.device)(so, U1ws.U, si, am0, lp.iL[1],
+                                  lp.iL[2], ndrange=(lp.iL[1], lp.iL[2]),
+                                  workgroupsize=U1ws.kprm.threads)
+    synchronize(U1ws.device)
+    return nothing
+end
+
+function gamm5Dw_sqr_msq!(so, tmp, si, am0, U1ws::U1Nf)
+
+    gamm5Dw!(so, si, am0, U1ws)
+    tmp .= so
+    gamm5Dw!(so, tmp, am0, U1ws)
+    
+    return nothing
+end
+
+function gamm5Dw_sqr_msq_am0!(am0)
+    return (x1, x2, x3, x4) -> gamm5Dw_sqr_msq!(x1, x2, x3, am0, x4)
+end
+
+
 
 # function gamm5Dw_sqr(so, U, si, am0::Float64, prm::LattParm, kprm::KernelParm)
 #     tmp = similar(so)
@@ -84,19 +107,20 @@ end
 #     return nothing
 # end
 
-# function gamm5Dw_sqr_musq(so, tmp, U, si, am0::Float64, mu_j::Float64, prm::LattParm, kprm::KernelParm)
 
-#     CUDA.@sync begin
-#         CUDA.@cuda threads=kprm.threads blocks=kprm.blocks gamm5Dw(so, U, si, am0, prm)
-#     end
-#     tmp .= so
-#     CUDA.@sync begin
-#         CUDA.@cuda threads=kprm.threads blocks=kprm.blocks gamm5Dw(so, U, tmp, am0, prm)
-#     end
-#     so .= so .+ (mu_j)^2*si
+function gamm5Dw_sqr_musq_am0_mu!(am0, mu)
+    return (x1, x2, x3, x4) -> gamm5Dw_sqr_musq!(x1, x2, x3, am0, mu, x4)
+end
+
+function gamm5Dw_sqr_musq!(so, tmp, si, am0, mu_j, U1ws::U1)
+
+    gamm5Dw!(so, si, am0, U1ws)
+    tmp .= so
+    gamm5Dw!(so, tmp, am0, U1ws)
+    so .= so .+ (mu_j)^2*si
     
-#     return nothing
-# end
+    return nothing
+end
 
 # function gamm5Dw_sqr_sqr_musq(so, tmp, U, si, am0::Float64, mu_j::Float64, prm::LattParm, kprm::KernelParm)
 

@@ -124,3 +124,69 @@ function U1Nf2HMC(u1ws::U1Nf2, hmcp::HMCParams)
 end
 
 sampler(lftws::U1Nf2, hmcp::HMCParams) = U1Nf2HMC(lftws, hmcp)
+
+
+# ======================= #
+# ======== U1 Nf ======== #
+# ======================= #
+
+
+struct U1Nfworkspace{T, A <: AbstractArray, S <: AbstractSolver} <: U1Nf
+    PRC::Type{T}
+    U::A
+    params::U1NfParm
+    device
+    kprm::KernelParm
+    rprm::Array{RHMCParm}
+    sws::S
+end
+
+function U1Nfworkspace(::Type{T1}, ::Type{T2}, lp::U1NfParm, device, kprm, rprm, maxiter::Int64 = 10000,
+        tol::Float64 = 1e-14; custom_init = nothing) where {T1, T2}
+    if custom_init == nothing
+        U = to_device(device, ones(T2, lp.iL..., 2))
+    else
+        U = custom_init
+    end
+    sws = CG(maxiter, tol, U)
+    return U1Nfworkspace{T1, typeof(U), typeof(sws)}(T1, U, lp, KernelAbstractions.get_backend(U), kprm, rprm, sws)
+end
+
+function (s::Type{U1Nf})(::Type{T1}, ::Type{T2} = complex(T1); ns_rat, r_as,
+                          r_bs, custom_init = nothing, device =
+                          KernelAbstractions.CPU(), maxiter::Int64 = 10000,
+                          tol::Float64 = 1e-14, kwargs...) where {T1, T2}
+    lp = U1NfParm(;kwargs...)
+    rprm = get_rhmc_params(ns_rat, r_as, r_bs)
+    return U1Nfworkspace(T1, T2, lp, device, KernelParm(lp), rprm, maxiter, tol, custom_init = custom_init)
+end
+
+
+struct U1NfHMC{A1 <: AbstractArray, A2 <: AbstractArray} <: AbstractHMC
+    params::HMC
+    X::A1
+    F::Array{A1}
+    g5DX::A1
+    frc1::A2 # gauge force
+    frc2::A2 # gauge force
+    pfrc::A2 # pf force
+    mom::A2
+end
+
+function U1NfHMC(u1ws::U1Nf, hmcp::HMCParams)
+    N_fermions = length(u1ws.params.am0)
+    X = similar(u1ws.U)
+    F = Array{typeof(u1ws.U)}(undef, N_fermions)
+    for i in 1:N_fermions
+        F[i] = similar(u1ws.U)
+    end
+    tmpF = similar(u1ws.U)
+    g5DX = similar(u1ws.U)
+    frc1 = to_device(u1ws.device, zeros(u1ws.PRC, u1ws.params.iL..., 2))
+    frc2 = similar(frc1)
+    pfrc = similar(frc1)
+    mom = similar(frc1)
+    return U1NfHMC{typeof(X), typeof(frc1)}(hmcp, X, F, g5DX, frc1, frc2, pfrc, mom)
+end
+
+sampler(lftws::U1Nf, hmcp::HMCParams) = U1NfHMC(lftws, hmcp)
