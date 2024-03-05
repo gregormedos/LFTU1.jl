@@ -189,3 +189,44 @@ function MultiCG(so, si, am0, rprm::RHMCParm, U1ws::U1)
 end
 
 
+function update_momenta!(U1ws::U1Nf, epsilon, hmcws::AbstractHMC)
+    # Compute force
+    force!(U1ws, hmcws)
+    
+	# Final force is frc1+frc2+frc
+    hmcws.mom .= hmcws.mom .+ epsilon .* (hmcws.frc1 .+ hmcws.frc2 .+ hmcws.pfrc)
+
+    return nothing
+end
+
+function force!(U1ws::U1Nf, hmcws::AbstractHMC)
+    am0 = U1ws.params.am0
+    N_fermions = length(am0)
+    rprm = U1ws.rprm
+    aux = similar(hmcws.X)
+    aux .= zero(U1ws.PRC)
+
+    for j in 1:N_fermions
+        for i in 1:rprm[j].n
+            # X = (D†D+μ²)⁻¹ϕⱼ
+            iter = invert!(hmcws.X, gamm5Dw_sqr_musq_am0_mu!(am0[j], rprm[j].mu[i]), hmcws.F[j], U1ws.sws, U1ws)
+
+            # Apply gamm5D to X
+            gamm5Dw!(hmcws.g5DX, hmcws.X, am0[j], U1ws)
+
+            # Get fermion part of the force in hmcws.pfrc
+            pf_force!(U1ws, hmcws)
+
+            # Dump it to aux
+            aux .= aux .+ rprm[j].rho[i]*hmcws.pfrc
+        end
+    end
+
+    # Dump aux to pfrc
+    hmcws.pfrc .= aux
+
+	# Get gauge part of the force in U1ws.frc1 and U1ws.frc2
+    gauge_force!(U1ws, hmcws)
+
+    return nothing
+end

@@ -141,3 +141,20 @@ function force!(U1ws::U1Nf2, hmcws::AbstractHMC)
 
     return nothing
 end
+
+
+# ======================= #
+# ======== U1 Nf ======== #
+# ======================= #
+
+action(U1ws::U1Nf, hmcws::AbstractHMC) = gauge_action(U1ws) + pfaction(U1ws, hmcws)
+
+function pfaction(U1ws::U1Nf, hmcws::AbstractHMC)
+    S_pf = zero(U1ws.PRC)
+    for j in 1:length(U1ws.params.am0)
+        LFTU1.MultiCG(hmcws.X, hmcws.F[j], U1ws.params.am0[j], U1ws.rprm[j], U1ws)
+        S_pf += LinearAlgebra.dot(hmcws.X, hmcws.F[j]) |> real
+    end
+    return S_pf
+end
+

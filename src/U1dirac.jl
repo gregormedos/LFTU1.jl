@@ -197,7 +197,7 @@ end
 # end
 
 
-function pf_force!(U1ws::U1Nf2, hmcws::AbstractHMC)
+function pf_force!(U1ws::Union{U1Nf2,U1Nf}, hmcws::AbstractHMC)
     lp = U1ws.params
     event = U1_tr_dQwdU!(U1ws.device)(hmcws.pfrc, U1ws.U, hmcws.X, hmcws.g5DX,
                                     lp.iL[1], lp.iL[2], 
