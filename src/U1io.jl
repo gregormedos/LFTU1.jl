@@ -36,6 +36,20 @@ function save_cnfg_header(fb::BDIO.BDIOstream, u1ws::U1Quenched)
     return nothing
 end
 
+function save_cnfg_header(fb::BDIO.BDIOstream, u1ws::U1Nf2)
+    if u1ws.params.BC == PeriodicBC
+        BC = 0
+    elseif u1ws.params.BC == OpenBC
+        BC = 1
+    end
+    BDIO.BDIO_write!(fb, [u1ws.params.beta])
+    BDIO.BDIO_write!(fb, [u1ws.params.am0])
+    BDIO.BDIO_write!(fb, [convert(Int32, u1ws.params.iL[1])])
+    BDIO.BDIO_write!(fb, [convert(Int32, BC)])
+    BDIO.BDIO_write_hash!(fb)
+    return nothing
+end
+
 
 """
     read_cnfg_info(fname::String, ::Type{U1Quenched})
@@ -86,6 +100,8 @@ function read_cnfg_info(fname::String, ::Type{U1Nf2})
     ifoo    = Vector{Float64}(undef, 1)
     BDIO.BDIO_read(fb, ifoo)
     beta    = ifoo[1]
+    BDIO.BDIO_read(fb, ifoo)
+    mass    = ifoo[1]
     ifoo    = Vector{Int32}(undef, 2)
     BDIO.BDIO_read(fb, ifoo)
     lsize   = convert(Int64, ifoo[1])
@@ -97,8 +113,9 @@ function read_cnfg_info(fname::String, ::Type{U1Nf2})
         BCt = OpenBC
     end
 
-    model = U1Quenched(Float64,
+    model = U1Nf2(Float64,
                        beta = beta,
+                       am0 = mass,
                        iL = (lsize, lsize),
                        BC = BCt,
                       )
