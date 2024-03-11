@@ -1,4 +1,5 @@
 import BDIO: BDIO_write!, BDIO_read
+import LFTSampling: save_cnfg_header, read_cnfg_info
 
 function BDIO.BDIO_write!(fb::BDIO.BDIOstream, u1ws::U1)
     for mu in 1:2, iy in 1:u1ws.params.iL[2], ix in 1:u1ws.params.iL[1]
@@ -21,46 +22,20 @@ function BDIO.BDIO_read(fb::BDIO.BDIOstream, u1ws::U1)
     BDIO.BDIO_read(fb, u1ws, reg)
 end
 
-"""
-    read_next_cnfg(fb::BDIO.BDIOstream, u1ws::U1)
 
-reads next configuration of BDIO handle `fb` and stores it into `u1ws.U`.
-"""
-function read_next_cnfg(fb::BDIO.BDIOstream, u1ws::U1)
-    while BDIO.BDIO_get_uinfo(fb) != 8
-        BDIO.BDIO_seek!(fb)
+function save_cnfg_header(fb::BDIO.BDIOstream, u1ws::U1Quenched)
+    if u1ws.params.BC == PeriodicBC
+        BC = 0
+    elseif u1ws.params.BC == OpenBC
+        BC = 1
     end
-    BDIO.BDIO_read(fb, u1ws)
-end
-
-"""
-    save_cnfg(fname::String, u1ws::U1Quenched)
-
-saves model instance `u1ws` to BDIO file `fname`. If file does not exist, it creates one and stores the info in `u1ws.params`, and then saves the configuration. If it does exist, it appends the configuration to the existing file.
-"""
-function save_cnfg(fname::String, u1ws::U1Quenched)
-    if isfile(fname)
-        fb = BDIO.BDIO_open(fname, "a")
-    else
-        fb = BDIO.BDIO_open(fname, "w", "U1 Configurations")
-
-        BDIO.BDIO_start_record!(fb, BDIO.BDIO_BIN_GENERIC, 1)
-        if u1ws.params.BC == PeriodicBC
-            BC = 0
-        elseif u1ws.params.BC == OpenBC
-            BC = 1
-        end
-        BDIO.BDIO_write!(fb, [u1ws.params.beta])
-        BDIO.BDIO_write!(fb, [convert(Int32, u1ws.params.iL[1])])
-        BDIO.BDIO_write!(fb, [convert(Int32, BC)])
-        BDIO.BDIO_write_hash!(fb)
-    end
-
-    BDIO.BDIO_start_record!(fb, BDIO.BDIO_BIN_F64LE, 8, true)
-    BDIO.BDIO_write!(fb,u1ws)
+    BDIO.BDIO_write!(fb, [u1ws.params.beta])
+    BDIO.BDIO_write!(fb, [convert(Int32, u1ws.params.iL[1])])
+    BDIO.BDIO_write!(fb, [convert(Int32, BC)])
     BDIO.BDIO_write_hash!(fb)
-    BDIO.BDIO_close!(fb)
+    return nothing
 end
+
 
 """
     read_cnfg_info(fname::String, ::Type{U1Quenched})
@@ -69,6 +44,38 @@ reads theory parameters from `fname` and returns `fb::BDIOstream` and a model
 instance with the read parameters
 """
 function read_cnfg_info(fname::String, ::Type{U1Quenched})
+
+    fb = BDIO.BDIO_open(fname, "r")
+
+    while BDIO.BDIO_get_uinfo(fb) != 1
+        BDIO.BDIO_seek!(fb)
+    end
+
+    ifoo    = Vector{Float64}(undef, 1)
+    BDIO.BDIO_read(fb, ifoo)
+    beta    = ifoo[1]
+    ifoo    = Vector{Int32}(undef, 2)
+    BDIO.BDIO_read(fb, ifoo)
+    lsize   = convert(Int64, ifoo[1])
+    BC      = convert(Int64, ifoo[2])
+
+    if BC == 0
+        BCt = PeriodicBC
+    elseif BC == 1
+        BCt = OpenBC
+    end
+
+    model = U1Quenched(Float64,
+                       beta = beta,
+                       iL = (lsize, lsize),
+                       BC = BCt,
+                      )
+
+    return fb, model
+end
+
+
+function read_cnfg_info(fname::String, ::Type{U1Nf2})
 
     fb = BDIO.BDIO_open(fname, "r")
 
