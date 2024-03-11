@@ -126,6 +126,16 @@ function pfaction(U1ws::U1Nf2, hmcws::AbstractHMC)
     return real(LinearAlgebra.dot(hmcws.X, hmcws.F))
 end
 
+function pf_force!(U1ws::Union{U1Nf2,U1Nf}, hmcws::AbstractHMC)
+    lp = U1ws.params
+    event = U1_tr_dQwdU!(U1ws.device)(hmcws.pfrc, U1ws.U, hmcws.X, hmcws.g5DX,
+                                    lp.iL[1], lp.iL[2], 
+                                    ndrange=(lp.iL[1], lp.iL[2]),
+                                    workgroupsize=U1ws.kprm.threads)
+    synchronize(U1ws.device)
+    return nothing
+end
+
 function force!(U1ws::U1Nf2, hmcws::AbstractHMC)
 	# Solve DX = F for X
     iter = invert!(hmcws.X, gamm5Dw_sqr_msq!, hmcws.F, U1ws.sws, U1ws)
@@ -158,3 +168,34 @@ function pfaction(U1ws::U1Nf, hmcws::AbstractHMC)
     return S_pf
 end
 
+function force!(U1ws::U1Nf, hmcws::AbstractHMC)
+    am0 = U1ws.params.am0
+    N_fermions = length(am0)
+    rprm = U1ws.rprm
+    aux = similar(hmcws.X)
+    aux .= zero(U1ws.PRC)
+
+    for j in 1:N_fermions
+        for i in 1:rprm[j].n
+            # X = (D†D+μ²)⁻¹ϕⱼ
+            iter = invert!(hmcws.X, gamm5Dw_sqr_musq_am0_mu!(am0[j], rprm[j].mu[i]), hmcws.F[j], U1ws.sws, U1ws)
+
+            # Apply gamm5D to X
+            gamm5Dw!(hmcws.g5DX, hmcws.X, am0[j], U1ws)
+
+            # Get fermion part of the force in hmcws.pfrc
+            pf_force!(U1ws, hmcws)
+
+            # Dump it to aux
+            aux .= aux .+ rprm[j].rho[i]*hmcws.pfrc
+        end
+    end
+
+    # Dump aux to pfrc
+    hmcws.pfrc .= aux
+
+	# Get gauge part of the force in U1ws.frc1 and U1ws.frc2
+    gauge_force!(U1ws, hmcws)
+
+    return nothing
+end

@@ -121,53 +121,57 @@ function get_rhmc_params(n_rhmc::Array, r_a_rhmc::Array, r_b_rhmc::Array; reweig
 end
 
 
-# """
-#     power_method(U, am0)
+"""
+    power_method(U, am0)
 
-# Given a gauge field `U` and a bare quark mass `am0`, return the maximum and
-# minimum eigenvalues of D^†D with 1000 iterations of the power method.
+Given a gauge field `U` and a bare quark mass `am0`, return the maximum and
+minimum eigenvalues of D^†D with 1000 iterations of the power method.
 
-# # Examples
-# ```jldocs
-# lambda_min, lambda_max = power_method(U, am0)
-# ```
-# """
-# function power_method(U, am0, prm, kprm; iter::Int64 = 1000)
+# Examples
+```jldocs
+lambda_min, lambda_max = power_method(U, am0)
+```
+"""
 
-#     b = (CUDA.randn(Float64, prm.iL[1], prm.iL[2], 2) .+ CUDA.randn(Float64, prm.iL[1], prm.iL[2], 2)im)/sqrt(2) # initial random fermionic field
+function power_method(U1ws::U1, am0; iter::Int64 = 1000)
 
-#     shift = 2     # this shift helps convergence
+    lp = U1ws.params
 
-#     # Apply recursively b = Ab.
-#     # To help convergence, apply instead b = (A + shift) b = Ab + shift b.
-#     # Then λ_max will be ⟨b|A|b⟩/⟨b|b⟩ - shift.
-#     for i in 1:iter
-#         b_aux = copy(b)
-#         gamm5Dw_sqr(b_aux, U, b, am0, prm, kprm)
-#         b_aux .= b_aux .+ shift*b
-#         b = b_aux/CUDA.dot(b_aux,b_aux)
-#     end
-#     bnext = copy(b)
-#     gamm5Dw_sqr(bnext, U, b, am0, prm, kprm)
-#     bnext .= bnext .+ shift*b
-#     lambda_max = CUDA.dot(b,bnext)/CUDA.dot(b,b) - shift
+    b = to_device(U1ws.device, Random.randn(ComplexF64, lp.iL[1], lp.iL[2], 2)) # initial random fermionic field
+    tmp = similar(b)
 
-#     # Apply recursively b = (A-λ_max I) b = Ab - λ_max b
-#     # Then λ_min will be ⟨b|A|b⟩/⟨b|b⟩ + λ_max
-#     for i in 1:iter
-#         b_last = copy(b)
-#         gamm5Dw_sqr(b, U, b, am0, prm, kprm)
-#         b .= b .- lambda_max*b_last
-#         b = b/CUDA.dot(b,b)
-#     end
-#     bnext = copy(b)
-#     gamm5Dw_sqr(bnext, U, b, am0, prm, kprm)
-#     bnext .= bnext .- lambda_max*b
-#     lambda_min = CUDA.dot(b,bnext)/CUDA.dot(b,b) + lambda_max
+    shift = 2     # this shift helps convergence
 
-#     return lambda_min, lambda_max
+    # Apply recursively b = Ab.
+    # To help convergence, apply instead b = (A + shift) b = Ab + shift b.
+    # Then λ_max will be ⟨b|A|b⟩/⟨b|b⟩ - shift.
+    for i in 1:iter
+        b_aux = copy(b)
+        gamm5Dw_sqr_msq!(b_aux, tmp, b, am0, U1ws::U1Nf)
+        b_aux .= b_aux .+ shift*b
+        b = b_aux/LinearAlgebra.dot(b_aux,b_aux)
+    end
+    bnext = copy(b)
+    gamm5Dw_sqr_msq!(bnext, tmp, b, am0, U1ws::U1Nf)
+    bnext .= bnext .+ shift*b
+    lambda_max = LinearAlgebra.dot(b,bnext)/LinearAlgebra.dot(b,b) - shift
 
-# end
+    # Apply recursively b = (A-λ_max I) b = Ab - λ_max b
+    # Then λ_min will be ⟨b|A|b⟩/⟨b|b⟩ + λ_max
+    for i in 1:iter
+        b_last = copy(b)
+        gamm5Dw_sqr_msq!(b, tmp, b_last, am0, U1ws::U1Nf)
+        b .= b .- lambda_max*b_last
+        b = b/LinearAlgebra.dot(b,b)
+    end
+    bnext = copy(b)
+    gamm5Dw_sqr_msq!(bnext, tmp, b, am0, U1ws::U1Nf)
+    bnext .= bnext .- lambda_max*b
+    lambda_min = LinearAlgebra.dot(b,bnext)/LinearAlgebra.dot(b,b) + lambda_max
+
+    return lambda_min, lambda_max
+
+end
 
 
 # # Returns Z X_in, with Z = D†DR² - I

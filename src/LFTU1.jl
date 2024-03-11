@@ -80,6 +80,7 @@ include("U1hmc.jl")
 export Hamiltonian, generate_momenta!, update_fields!, U1_update_field!, update_momenta!, generate_pseudofermions!
 
 include("U1rhmc.jl")
+export power_method
 
 include("U1io.jl")
 
