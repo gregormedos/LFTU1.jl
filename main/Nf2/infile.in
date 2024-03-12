@@ -1,0 +1,17 @@
+["Model params"]
+beta = 4.0
+mass = 0.02
+L = 24
+BC = 'PeriodicBC'
+
+["HMC params"]
+tau = 1.0
+nsteps = 20
+ntherm = 1000
+ntraj = 100000
+discard = 0
+integrator = "Leapfrog"
+
+["Working directory"]
+wdir = "results/1-Smilga/"
+
