@@ -69,7 +69,7 @@ logio = open(dirname(configfile)*"/log.txt", "a+")
 logger = SimpleLogger(logio)
 global_logger(logger)
 
-@info "U(1) NF=2 SIMULATION" dump(model.params) dump(smplr)
+@info "U(1) NF=2 SIMULATION" model.params smplr
 
 @info "Starting thermalization"
 
