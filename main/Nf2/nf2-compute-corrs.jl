@@ -10,8 +10,6 @@ length(ARGS) == 1 || error("Only one argument is expected! (Path to input file)"
 isfile(ARGS[1]) || error("Path provided is not a file")
 cfile = ARGS[1]
 
-cfile = "/home/david/git/dalbandea/phd/codes/6-LFTs/LFTModels/LFTU1.jl/results/1-Smilga/Nf2sim-b4.0-L24-m0.02_D2024-03-12-15-18-23.156/Nf2sim-b4.0-L24-m0.02_D2024-03-12-15-18-23.156.bdio"
-
 ncfgs = LFTSampling.count_configs(cfile)
 fb, model = read_cnfg_info(cfile, U1Nf2)
 pws = U1PionCorrelator(model, wdir=dirname(cfile))
