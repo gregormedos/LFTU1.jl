@@ -3,9 +3,11 @@ module LFTU1
 using LFTSampling
 
 using KernelAbstractions
+import Dates
 import Random
 import BDIO
 import LinearAlgebra
+import LinearAlgebra: dot
 import Elliptic, Elliptic.Jacobi
 using PrecompileTools: @setup_workload, @compile_workload
 
@@ -83,6 +85,9 @@ include("U1io.jl")
 
 include("U1dirac.jl")
 export gamm5Dw!, gamm5Dw_sqr_msq!
+
+include("U1measurements.jl")
+export U1PionCorrelator, U1PCACCorrelator, invert_sources!
 
 # to_device(::CUDAKernels.CUDADevice, x) = CUDA.CuArray(x)
 # to_device(::ROCKernels.ROCDevice, x) = AMDGPU.ROCArray(x)
