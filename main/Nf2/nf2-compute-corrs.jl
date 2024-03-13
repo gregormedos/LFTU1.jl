@@ -215,6 +215,7 @@ end
 
 length(ARGS) == 1 || error("Only one argument is expected! (Path to input file)")
 isfile(ARGS[1]) || error("Path provided is not a file")
+cfile = ARGS[1]
 
 ncfgs = LFTSampling.count_configs(cfile)
 fb, model = read_cnfg_info(cfile, U1Nf2)
