@@ -70,12 +70,23 @@ let
         save_cnfg(fname, ens[i])
     end
     rens = LFTSampling.read_ensemble(fname, U1Nf2)
+    roboens = deepcopy(rens)
+    LFTU1.coldstart!.(roboens)
+    fb, model = read_cnfg_info(fname, U1Nf2)
+    for i in 1:length(roboens)
+        read_next_cnfg(fb, model)
+        roboens[i] = deepcopy(model)
+    end
+    close(fb)
     @testset "Nf=2 PBC" begin
         for i in 1:length(ens)
             @test ens[i].params == rens[i].params
             @test ens[i].U == rens[i].U
+            @test ens[i].params == roboens[i].params
+            @test ens[i].U == roboens[i].U
         end
     end
     rm(fname, force=true)
+
 
 end
