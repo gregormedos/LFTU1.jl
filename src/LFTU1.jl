@@ -7,7 +7,7 @@ import Random
 import BDIO
 import LinearAlgebra
 import Elliptic, Elliptic.Jacobi
-# import CUDA, CUDAKernels
+using PrecompileTools: @setup_workload, @compile_workload
 
 abstract type U1 <: AbstractLFT end
 abstract type U1Quenched <: U1 end
@@ -97,6 +97,29 @@ disallowscalar(::KernelAbstractions.CPU) = nothing
 
 if !isdefined(Base, :get_extension)
   include("../ext/LFTU1CUDAExt.jl")
+end
+
+@setup_workload begin
+    # Putting some things in `@setup_workload` instead of `@compile_workload`
+    # can reduce the size of the precompile file and potentially make loading
+    # faster.
+    beta = 5.555
+    lsize = 2
+    mass = 0.6
+
+    model = U1Nf2(Float64,
+                  beta = beta,
+                  am0 = mass,
+                  iL = (lsize, lsize),
+                  BC = PeriodicBC,
+                 )
+    samplerws = LFTSampling.sampler(model, HMC(integrator = Leapfrog(1.0, 2)))
+    @compile_workload begin
+        # all calls in this block will be precompiled, regardless of whether
+        # they belong to your package or not (on Julia 1.8 and higher)
+        LFTU1.randomize!(model)
+        sample!(model, samplerws);
+    end
 end
 
 # Glossary of variable name meanings

@@ -9,6 +9,7 @@ Elliptic = "b305315f-e792-5b7a-8f41-49f472929428"
 KernelAbstractions = "63c18a36-062a-441e-b654-da1e3ab1ce7c"
 LFTSampling = "01beebb5-6b54-40b6-b312-fac6d2d10d07"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
+PrecompileTools = "aea7be01-6a6a-4083-8856-8a6e6704d82a"
 Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 

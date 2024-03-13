@@ -2,7 +2,7 @@
 
 julia_version = "1.10.0"
 manifest_format = "2.0"
-project_hash = "b293b2a0006cecb120eac40f35f950cf41b9cc80"
+project_hash = "e4fcf3202192999e19839ab9737cfa0a33b242d3"
 
 [[deps.ANSIColoredPrinters]]
 git-tree-sha1 = "574baf8110975760d391c710b6341da1afa48d8c"
@@ -414,9 +414,9 @@ version = "1.10.0"
 
 [[deps.PrecompileTools]]
 deps = ["Preferences"]
-git-tree-sha1 = "03b4c25b43cb84cee5c90aa9b5ea0a78fd848d2f"
+git-tree-sha1 = "5aa36f7049a63a1528fe8f7c3f2113413ffd4e1f"
 uuid = "aea7be01-6a6a-4083-8856-8a6e6704d82a"
-version = "1.2.0"
+version = "1.2.1"
 
 [[deps.Preferences]]
 deps = ["TOML"]
