@@ -2,9 +2,30 @@
 using Revise
 import Pkg
 Pkg.activate(".")
+using TOML
+
+length(ARGS) == 1 || error("Only one argument is expected! (Path to input file)")
+isfile(ARGS[1]) || error("Path provided is not a file")
+
+if length(ARGS) == 1
+    infile = ARGS[1]
+else
+    infile = "main/Nf2/infile.in"
+end
+pdata = TOML.parsefile(infile)
+device = pdata["Model params"]["device"]
+if device == "CUDA"
+    import CUDA
+    device = CUDA.device()
+elseif device == "CPU"
+    import KernelAbstractions
+    device = KernelAbstractions.CPU()
+else
+    error("Only acceptable devices are CUDA or CPU")
+end
+
 using LFTSampling
 using LFTU1
-using TOML
 using Dates
 using Logging
 
@@ -18,16 +39,6 @@ function create_simulation_directory(wdir::String, u1ws::U1Nf2)
     cp(infile, joinpath(fdir,splitpath(infile)[end]))
     return configfile
 end
-
-length(ARGS) == 1 || error("Only one argument is expected! (Path to input file)")
-isfile(ARGS[1]) || error("Path provided is not a file")
-
-if length(ARGS) == 1
-    infile = ARGS[1]
-else
-    infile = "main/Nf2/infile.in"
-end
-pdata = TOML.parsefile(infile)
 
 # Read model parameters
 
@@ -56,6 +67,7 @@ model = U1Nf2(
               am0 = mass, 
               iL = (lsize, lsize), 
               BC = PeriodicBC,
+              device = CUDA.device(),
              )
 
 randomize!(model)
