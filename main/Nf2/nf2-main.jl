@@ -67,7 +67,7 @@ model = U1Nf2(
               am0 = mass, 
               iL = (lsize, lsize), 
               BC = PeriodicBC,
-              device = CUDA.device(),
+              device = device,
              )
 
 randomize!(model)
