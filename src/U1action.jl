@@ -108,7 +108,7 @@ end
 
 function U1topcharge(plaquettes, U, beta, Nx, Ny, device, threads, blocks)
     event = U1qtop!(device)(plaquettes, U, Nx, Ny, ndrange=(Nx, Ny), workgroupsize=threads)
-    synchronize(U1ws.device)
+    synchronize(device)
     Q = reduce(+, plaquettes) / (2.0*pi)
     return Q
 end
