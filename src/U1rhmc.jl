@@ -174,20 +174,20 @@ function power_method(U1ws::U1, am0; iter::Int64 = 1000)
 end
 
 
-# # Returns Z X_in, with Z = D†DR² - I
-# function LuscherZ(Z, U, X_in, am0, CGmaxiter, CGtol, rprm::RHMCParm, prm::LattParm, kprm::KernelParm)
-#     # Z = D†DR² X_in
-#     R(Z, U, X_in, am0, CGmaxiter, CGtol, gamm5Dw_sqr_musq, rprm, prm, kprm)
-#     tmp = copy(Z)
-#     R(Z, U, tmp, am0, CGmaxiter, CGtol, gamm5Dw_sqr_musq, rprm, prm, kprm)
-#     tmp .= Z
-#     CUDA.@cuda threads=kprm.threads blocks=kprm.blocks gamm5Dw(Z, U, tmp, am0, prm)
-#     tmp .= Z
-#     CUDA.@cuda threads=kprm.threads blocks=kprm.blocks gamm5Dw(Z, U, tmp, am0, prm)
-#     # Z = Z - X_in = (D†DR² - I) X_in
-#     Z .= Z .- X_in
-#     return nothing
-# end
+# Returns Z X_in, with Z = D†DR² - I
+function LuscherZ(Z, X_in, am0, rprm::RHMCParm, u1ws::U1Nf)
+    # Z = D†DR² X_in
+    LFTU1.R(Z, X_in, am0, rprm, u1ws)
+    tmp = copy(Z)
+    LFTU1.R(Z, tmp, am0, rprm, u1ws)
+    tmp .= Z
+    gamm5Dw!(Z, tmp, am0, u1ws)
+    tmp .= Z
+    gamm5Dw!(Z, tmp, am0, u1ws)
+    # Z = Z - X_in = (D†DR² - I) X_in
+    Z .= Z .- X_in
+    return nothing
+end
 
 # # Returns ZᵖX_in, with Z = D†DR² - I
 # function LuscherZp(Z, p::Int64, U, X_in, am0, CGmaxiter, CGtol, rprm::RHMCParm, prm::LattParm, kprm::KernelParm)
@@ -205,42 +205,40 @@ end
 # end
 
 
-# # Compute reweighting factor W_N with N=1, eq. (4.1)
-# """
-#     reweighting_factor(U, am0, prm::LattParm, kprm::KernelParm, rprm::RHMCParm)
+# Compute reweighting factor W_N with N=1, eq. (4.1)
+"""
+    reweighting_factor(U, am0, prm::LattParm, kprm::KernelParm, rprm::RHMCParm)
 
-# Computes the reweighting factor ``W_N`` stochastically using `N` random normal fields up to order `rprm.reweighting_Taylor` in the Taylor expansion of ``(1-Z)^{-1/2}``. If `am0` and `rprm` are lists, returns product of ``W_N`` of all fermions.
-# """
-# function reweighting_factor(U, am0, CGmaxiter, CGtol, prm::LattParm, kprm::KernelParm, rprm::RHMCParm)
+Computes the reweighting factor ``W_N`` stochastically using `N` random normal fields up to order `rprm.reweighting_Taylor` in the Taylor expansion of ``(1-Z)^{-1/2}``. If `am0` and `rprm` are lists, returns product of ``W_N`` of all fermions.
+"""
+function reweighting_factor(am0, rprm::RHMCParm, u1ws::U1Nf)
+    W_N = 0.0
 
-#     W_N = 0.0
+    # estimate W_N with rprm.reweighting_N pseudofermions
+    for j in 1:rprm.reweighting_N
+        argexp = 0.0    # contains the argument of the exponentials of W_N for each j
+        Tfactor = 1/2   # Taylor factor of expansion (1+Z)^(-1/2)
+        X = to_device(u1ws.device, randn(complex(u1ws.PRC), u1ws.params.iL[1], u1ws.params.iL[2], 2))
+        ZpX = similar(X)
+        tmp = copy(X)
+        for i in 1:rprm.reweighting_Taylor
+            LFTU1.LuscherZ(ZpX, tmp, am0, rprm, u1ws)
+            argexp += Tfactor * dot(X,ZpX) |> real
+            Tfactor *= (-1)*(2*i+1)/2/factorial(i+1)*factorial(i)
+            tmp .= ZpX
+        end
+        W_N += exp(argexp)/rprm.reweighting_N
+    end
 
-#     # estimate W_N with rprm.reweighting_N pseudofermions
-#     for j in 1:rprm.reweighting_N
-#         argexp = 0.0    # contains the argument of the exponentials of W_N for each j
-#         Tfactor = 1/2   # Taylor factor of expansion (1+Z)^(-1/2)
-#         X = (CUDA.randn(Float64, prm.iL[1], prm.iL[2], 2) .+ CUDA.randn(Float64, prm.iL[1], prm.iL[2], 2)im)/sqrt(2)
-#         ZpX = similar(X)
-#         tmp = copy(X)
-#         for i in 1:rprm.reweighting_Taylor
-#             LuscherZ(ZpX, U, tmp, am0, CGmaxiter, CGtol, rprm, prm, kprm)  
-#             argexp += Tfactor * CUDA.dot(X,ZpX) |> real
-#             Tfactor *= (-1)*(2*i+1)/2/factorial(i+1)*factorial(i)
-#             tmp .= ZpX
-#         end
-#         W_N += exp(argexp)/rprm.reweighting_N
-#     end
+    @debug begin
+        two_N_delta = 2*u1ws.params.iL[1]*u1ws.params.iL[2]*u1ws.rprm.delta
+        # pritnln("W_$(rprm.reweighting_N) = $(W_N)")
 
-#     @debug begin
-#         two_N_delta = 2*prm.iL[1]*prm.iL[2]*rprm.delta
-#         # pritnln("W_$(rprm.reweighting_N) = $(W_N)")
-
-#         "if 2Nδ = $(two_N_delta) ≤ 0.01, W₁ is expected to deviate from 1 at most by 1%"
-#     end
+        "if 2Nδ = $(two_N_delta) ≤ 0.01, W₁ is expected to deviate from 1 at most by 1%"
+    end
     
-#     return W_N # if 2Nδ≤0.01, W₁ is expected to deviate from 1 at most by 1%
-
-# end
+    return W_N # if 2Nδ≤0.01, W₁ is expected to deviate from 1 at most by 1%
+end
 
 
 # function reweighting_factor(U, am0::Array{Float64}, CGmaxiter, CGtol, prm::LattParm, kprm::KernelParm, rprm::Array{RHMCParm})
