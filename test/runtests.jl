@@ -23,6 +23,7 @@ get_field(u1ws::LFTU1.U1) = u1ws.U
 
         @testset verbose = true "U1 Nf" begin
             include("u1nftests.jl")
+            include("u1nfzolotarevtests.jl")
         end
 
         @testset verbose = true "U1 I/O" begin

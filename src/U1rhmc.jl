@@ -256,21 +256,21 @@ end
 
 
 
-# """
-#     R(so, U, si, am0, maxiter, eps, A, rprm, prm, kprm)
+"""
+    R(so, U, si, am0, maxiter, eps, A, rprm, prm, kprm)
 
-# Applies rational approximation ``R(A) = A^{-1/2}`` to the field `si`, storing it
-# in `so`, with `A` an operator.
-# """
-# function R(so, U, si, am0, maxiter, eps, A, rprm::RHMCParm, prm::LattParm, kprm::KernelParm)
-# 	aux = similar(so)
-# 	so .= si  # this accounts for identity in partial fraction descomposition
-# 	for j in 1:rprm.n
-# 		CG(aux, U, si, am0, rprm.mu[j], maxiter, eps, A, prm, kprm)
-# 		so .= so .+ rprm.rho[j]*aux
-# 	end
-# 	so .= rprm.r_b^(-1) * rprm.A * so
+Applies rational approximation ``R(A) = A^{-1/2}`` to the field `si`, storing it
+in `so`, with `A` an operator.
+"""
+function R(so, si, am0, rprm::RHMCParm, U1ws::U1)
+	aux = similar(so)
+	so .= si  # this accounts for identity in partial fraction descomposition
+	for j in 1:rprm.n
+        iter = invert!(aux, gamm5Dw_sqr_musq_am0_mu!(am0, rprm.mu[j]), si, U1ws.sws, U1ws)
+		so .= so .+ rprm.rho[j]*aux
+	end
+	so .= rprm.r_b^(-1) * rprm.A * so
 
-#     return nothing
-# end
+    return nothing
+end
 
