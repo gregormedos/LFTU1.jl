@@ -240,17 +240,16 @@ function reweighting_factor(am0, rprm::RHMCParm, u1ws::U1Nf)
     return W_N # if 2Nδ≤0.01, W₁ is expected to deviate from 1 at most by 1%
 end
 
+function reweighting_factor(u1ws::U1Nf)
+    N_fermions = length(u1ws.params.am0)
 
-# function reweighting_factor(U, am0::Array{Float64}, CGmaxiter, CGtol, prm::LattParm, kprm::KernelParm, rprm::Array{RHMCParm})
+    total_W_N = 1.0 # to return. will contain product of W_N of all fermions
+    for j in 1:N_fermions
+        total_W_N *= reweighting_factor(u1ws.params.am0[j], u1ws.rprm[j], u1ws)
+    end
 
-#     total_W_N = 1.0 # to return. will contain product of W_N of all fermions
-#     for j in 1:length(am0)
-#         total_W_N *= reweighting_factor(U, am0[j], CGmaxiter, CGtol, prm, kprm, rprm[j])
-#     end
-
-#     return total_W_N
-
-# end
+    return total_W_N
+end
 
 
 
