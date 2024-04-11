@@ -152,11 +152,18 @@ function U1Nfworkspace(::Type{T1}, ::Type{T2}, lp::U1NfParm, device, kprm, rprm,
     return U1Nfworkspace{T1, typeof(U), typeof(sws)}(T1, U, lp, KernelAbstractions.get_backend(U), kprm, rprm, sws)
 end
 
-function (s::Type{U1Nf})(::Type{T1}, ::Type{T2} = complex(T1); ns_rat, r_as,
-                          r_bs, custom_init = nothing, device =
-                          KernelAbstractions.CPU(), maxiter::Int64 = 10000,
-                          tol::Float64 = 1e-14, kwargs...) where {T1, T2}
+function (s::Type{U1Nf})(::Type{T1}, ::Type{T2} = complex(T1); ns_rat = nothing,
+                         r_as = nothing, r_bs = nothing, custom_init = nothing,
+                         device = KernelAbstractions.CPU(), maxiter::Int64 =
+                         10000, tol::Float64 = 1e-14, kwargs...) where {T1, T2}
     lp = U1NfParm(;kwargs...)
+    
+    if ns_rat == nothing
+        N_fermions = length((;kwargs...).am0)
+        ns_rat = fill(1, N_fermions)
+        r_as = copy((;kwargs...).am0)
+        r_bs = fill(6.0, N_fermions)
+    end
     rprm = get_rhmc_params(ns_rat, r_as, r_bs)
     return U1Nfworkspace(T1, T2, lp, device, KernelParm(lp), rprm, maxiter, tol, custom_init = custom_init)
 end
