@@ -122,3 +122,55 @@ function read_cnfg_info(fname::String, ::Type{U1Nf2})
 
     return fb, model
 end
+
+function save_cnfg_header(fb::BDIO.BDIOstream, u1ws::U1Nf)
+    if u1ws.params.BC == PeriodicBC
+        BC = 0
+    elseif u1ws.params.BC == OpenBC
+        BC = 1
+    end
+    BDIO.BDIO_write!(fb, [u1ws.params.beta])
+    BDIO.BDIO_write!(fb, [convert(Int32, length(u1ws.params.am0))])
+    BDIO.BDIO_write!(fb, u1ws.params.am0)
+    BDIO.BDIO_write!(fb, [convert(Int32, u1ws.params.iL[1])])
+    BDIO.BDIO_write!(fb, [convert(Int32, BC)])
+    BDIO.BDIO_write_hash!(fb)
+    return nothing
+end
+
+function read_cnfg_info(fname::String, ::Type{U1Nf})
+
+    fb = BDIO.BDIO_open(fname, "r")
+
+    while BDIO.BDIO_get_uinfo(fb) != 1
+        BDIO.BDIO_seek!(fb)
+    end
+
+    ifoo    = Vector{Float64}(undef, 1)
+    BDIO.BDIO_read(fb, ifoo)
+    beta    = ifoo[1]
+    ifoo    = Vector{Int32}(undef, 1)
+    BDIO.BDIO_read(fb, ifoo)
+    N_fermions = convert(Int64, ifoo[1])
+    masses  = Vector{Float64}(undef, N_fermions)
+    BDIO.BDIO_read(fb, masses)
+    ifoo    = Vector{Int32}(undef, 2)
+    BDIO.BDIO_read(fb, ifoo)
+    lsize   = convert(Int64, ifoo[1])
+    BC      = convert(Int64, ifoo[2])
+
+    if BC == 0
+        BCt = PeriodicBC
+    elseif BC == 1
+        BCt = OpenBC
+    end
+
+    model = U1Nf(Float64,
+                       beta = beta,
+                       am0 = masses,
+                       iL = (lsize, lsize),
+                       BC = BCt,
+                      )
+
+    return fb, model
+end

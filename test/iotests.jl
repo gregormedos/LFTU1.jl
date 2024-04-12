@@ -89,4 +89,41 @@ let
     rm(fname, force=true)
 
 
+
+    beta = 5.0
+    lsize = 8
+    masses = [0.2, 0.2]
+    model = U1Nf(Float64,
+                  beta = beta,
+                  am0 = masses,
+                  iL = (lsize, lsize),
+                  BC = PeriodicBC,
+                 )
+    LFTU1.randomize!(model)
+    fname = "qriotest.bdio"
+    isfile(fname) && error("File already exists!")
+    ens = [deepcopy(model) for i in 1:10]
+    for i in 1:length(ens)
+        LFTU1.randomize!(ens[i])
+        save_cnfg(fname, ens[i])
+    end
+    rens = LFTSampling.read_ensemble(fname, U1Nf)
+    roboens = deepcopy(rens)
+    LFTU1.coldstart!.(roboens)
+    fb, model = read_cnfg_info(fname, U1Nf)
+    for i in 1:length(roboens)
+        read_next_cnfg(fb, model)
+        roboens[i] = deepcopy(model)
+    end
+    close(fb)
+    @testset "Nf PBC" begin
+        for i in 1:length(ens)
+            @test ens[i].params.am0 == rens[i].params.am0
+            @test ens[i].U == rens[i].U
+            @test ens[i].params.beta == roboens[i].params.beta
+            @test ens[i].U == roboens[i].U
+        end
+    end
+    rm(fname, force=true)
+
 end
