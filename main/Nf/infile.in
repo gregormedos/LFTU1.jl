@@ -1,0 +1,23 @@
+["Model params"]
+beta = 4.0
+masses = [0.1, 0.1]
+L = 24
+BC = 'PeriodicBC'
+device = "CPU"
+
+["HMC params"]
+tau = 1.0
+nsteps = 3
+ntherm = 10
+ntraj = 1
+discard = 0
+integrator = "OMF4"
+
+["RHMC params"]
+nrhmc = [5, 5]
+r_as = [0.1, 0.1]
+r_bs = [6.0, 6.0]
+
+["Working directory"]
+wdir = "trash/"
+
