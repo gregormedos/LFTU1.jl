@@ -59,6 +59,8 @@ integrator = eval(Meta.parse(pdata["HMC params"]["integrator"]))
 # Working directory
 
 wdir = pdata["Working directory"]["wdir"]
+cntinue = pdata["Working directory"]["continue"]
+cntfile = pdata["Working directory"]["cntfile"]
 
 
 model = U1Nf2(
@@ -74,26 +76,42 @@ randomize!(model)
 smplr = HMC(integrator = integrator(tau, nsteps))
 samplerws = LFTSampling.sampler(model, smplr)
 
-@info "Creating simulation directory"
+if cntinue == true
+    @info "Reading from old simulation"
+    configfile = cntfile
+    ncfgs = LFTSampling.count_configs(configfile)
+    fb, model = read_cnfg_info(configfile, U1Nf2)
+    LFTSampling.read_cnfg_n(fb, ncfgs, model)
+    close(fb)
+else
+    @info "Creating simulation directory"
+    configfile = create_simulation_directory(wdir, model)
+end
 
-configfile = create_simulation_directory(wdir, model)
 logio = open(dirname(configfile)*"/log.txt", "a+")
 logger = SimpleLogger(logio)
 global_logger(logger)
 
 @info "U(1) NF=2 SIMULATION" model.params smplr
 
-@info "Starting thermalization"
-
-for i in 1:ntherm
-    @info "THERM STEP $i"
-    @time sample!(model, samplerws)
-    flush(logio)
+if cntinue == true
+    @info "Skipping thermalization"
+else
+    @info "Starting thermalization"
+    for i in 1:ntherm
+        @info "THERM STEP $i"
+        @time sample!(model, samplerws)
+        flush(logio)
+    end
 end
 
-@info "Starting simulation"
+if cntinue == true
+    @info "Restarting simulation from trajectory $ncfgs"
+else
+    @info "Starting simulation"
+end
 
-@time for i in 1:ntraj
+@time for i in (cntinue ? ncfgs+1 : 1):ntraj
     @info "TRAJECTORY $i"
     for j in 1:discard
         @time sample!(model, samplerws)
@@ -103,4 +121,4 @@ end
     flush(logio)
 end
 
-close(io)
+close(logio)

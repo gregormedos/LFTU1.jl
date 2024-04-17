@@ -1,18 +1,20 @@
 ["Model params"]
 beta = 4.0
 mass = 0.02
-L = 64
+L = 24
 BC = 'PeriodicBC'
-device = "CUDA"
+device = "CPU"
 
 ["HMC params"]
 tau = 1.0
-nsteps = 20
-ntherm = 1000
+nsteps = 3
+ntherm = 10
 ntraj = 100000
 discard = 0
-integrator = "Leapfrog"
+integrator = "OMF4"
 
 ["Working directory"]
 wdir = "trash/"
+continue = false
+cntfile = "trash/Nf2sim-b4.0-L24-m0.02_D2024-04-17-18-04-06.008/Nf2sim-b4.0-L24-m0.02_D2024-04-17-18-04-06.008.bdio"
 
