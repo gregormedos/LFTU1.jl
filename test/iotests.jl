@@ -1,6 +1,7 @@
 using LFTU1
 
 let
+
     beta = 5.555
     lsize = 8
 
@@ -124,6 +125,16 @@ let
             @test ens[i].U == roboens[i].U
         end
     end
+    # Test to read the last configuration
+    ncfgs = LFTSampling.count_configs(fname)
+    fb, model2 = read_cnfg_info(fname, U1Nf)
+    LFTSampling.read_cnfg_n(fb, ncfgs, model2)
+    close(fb)
+    @testset "Nf PBC read last config" begin
+        @test ens[end].params.am0 == model2.params.am0
+        @test ens[end].U == model2.U
+    end
+
     rm(fname, force=true)
 
 end
