@@ -85,6 +85,7 @@ if cntinue == true
     close(fb)
 else
     @info "Creating simulation directory"
+    ncfgs = 0
     configfile = create_simulation_directory(wdir, model)
 end
 
@@ -111,7 +112,7 @@ else
     @info "Starting simulation"
 end
 
-@time for i in (cntinue ? ncfgs+1 : 1):ntraj
+@time for i in (ncfgs+1):(ncfgs+ntraj)
     @info "TRAJECTORY $i"
     for j in 1:discard
         @time sample!(model, samplerws)
@@ -121,4 +122,6 @@ end
     flush(logio)
 end
 
+@info "Simulation finished succesfully"
+flush(logio)
 close(logio)
