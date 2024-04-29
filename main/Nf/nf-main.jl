@@ -92,7 +92,7 @@ global_logger(logger)
 
 @info "U(1) NF=2 SIMULATION" model.params smplr
 
-reasonable_bound = 2 * 24^2 * model.rprm[1].delta^2
+reasonable_bound = 2 * lsize^2 * model.rprm[1].delta^2
 if  reasonable_bound > 10^(-4) # reasonable if <= 10^(-4)
     @info "2Vδ² = $(reasonable_bound) > 10⁻⁴"
 end
