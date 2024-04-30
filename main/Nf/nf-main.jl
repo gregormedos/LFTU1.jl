@@ -79,7 +79,7 @@ model = U1Nf(Float64,
 model.rprm .= LFTU1.get_rhmc_params(ns_rat, r_as, r_bs)
 
 randomize!(model)
-smplr = HMC(integrator = integrator(tau, nsteps))
+smplr = HMC(integrator = integrator(tau, nsteps+1))
 samplerws = LFTSampling.sampler(model, smplr)
 
 @info "Creating simulation directory"
@@ -109,7 +109,17 @@ function log_spectral_range(u1ws::U1Nf)
     end
 end
 
-for i in 1:ntherm
+@info "10 FIRST THERMALIZATION STEPS WITH nsteps + 1 INTEGRATION STEPS"
+for i in 1:10
+    @info "THERM STEP $i"
+    @time sample!(model, samplerws)
+end
+
+@info "REMAINING THERMALIZATION WITH nsteps INTEGRATION STEPS"
+smplr = HMC(integrator = integrator(tau, nsteps))
+samplerws = LFTSampling.sampler(model, smplr)
+
+for i in 11:ntherm
     @info "THERM STEP $i"
     @time sample!(model, samplerws)
     W_N = LFTU1.reweighting_factor(model)
