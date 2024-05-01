@@ -79,7 +79,7 @@ model = U1Nf(Float64,
                   )
 
 randomize!(model)
-smplr = HMC(integrator = integrator(tau, nsteps+1))
+smplr = HMC(integrator = integrator(tau, nsteps))
 samplerws = LFTSampling.sampler(model, smplr)
 
 @info "Creating simulation directory"
@@ -129,6 +129,8 @@ else
     @info "Starting thermalization"
 
     @info "10 FIRST THERMALIZATION STEPS WITH nsteps + 1 INTEGRATION STEPS"
+    smplr = HMC(integrator = integrator(tau, nsteps+1))
+    samplerws = LFTSampling.sampler(model, smplr)
     for i in 1:10
         @info "THERM STEP $i"
         @time sample!(model, samplerws)
