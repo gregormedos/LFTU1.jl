@@ -1,23 +1,24 @@
 ["Model params"]
 beta = 4.0
-masses = [0.1, 0.1]
-L = 24
+masses = [-0.08, 0.12]
+L = 64
 BC = 'PeriodicBC'
 device = "CPU"
 
 ["HMC params"]
 tau = 1.0
 nsteps = 3
-ntherm = 10
-ntraj = 1
+ntherm = 500
+ntraj = 4000
 discard = 0
 integrator = "OMF4"
 
 ["RHMC params"]
-nrhmc = [5, 5]
-r_as = [0.1, 0.1]
+nrhmc = [8, 5]
+r_as = [0.01, 0.20]
 r_bs = [6.0, 6.0]
 
 ["Working directory"]
-wdir = "trash/"
-
+wdir = "trash"
+continue = true
+cntfile = "/home/david/git/dalbandea/phd/codes/6-LFTs/LFTModels/LFTU1.jl/trash/Nfsim-b4.0-L64-m[-0.08,0.12]_D2024-05-01-12-48-55.096/Nfsim-b4.0-L64-m[-0.08,0.12]_D2024-05-01-12-48-55.096.bdio"

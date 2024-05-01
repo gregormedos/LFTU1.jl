@@ -66,6 +66,8 @@ r_bs = pdata["RHMC params"]["r_bs"]
 # Working directory
 
 wdir = pdata["Working directory"]["wdir"]
+cntinue = pdata["Working directory"]["continue"]
+cntfile = pdata["Working directory"]["cntfile"]
 
 
 model = U1Nf(Float64,
@@ -76,21 +78,33 @@ model = U1Nf(Float64,
                    device = device,
                   )
 
-model.rprm .= LFTU1.get_rhmc_params(ns_rat, r_as, r_bs)
-
 randomize!(model)
 smplr = HMC(integrator = integrator(tau, nsteps+1))
 samplerws = LFTSampling.sampler(model, smplr)
 
 @info "Creating simulation directory"
 
-configfile = create_simulation_directory(wdir, model)
+if cntinue == true
+    @info "Reading from old simulation"
+    configfile = cntfile
+    ncfgs = LFTSampling.count_configs(configfile)
+    fb, model = read_cnfg_info(configfile, U1Nf)
+    LFTSampling.read_cnfg_n(fb, ncfgs, model)
+    close(fb)
+else
+    @info "Creating simulation directory"
+    ncfgs = 0
+    configfile = create_simulation_directory(wdir, model)
+end
+
+model.rprm .= LFTU1.get_rhmc_params(ns_rat, r_as, r_bs)
+
 logio = open(dirname(configfile)*"/log.txt", "a+")
 Wio = open(dirname(configfile)*"/reweighting_factor.txt", "a+")
 logger = SimpleLogger(logio)
 global_logger(logger)
 
-@info "U(1) NF=2 SIMULATION" model.params smplr
+@info "U(1) NF SIMULATION" model.params smplr
 
 reasonable_bound = 2 * lsize^2 * model.rprm[1].delta^2
 if  reasonable_bound > 10^(-4) # reasonable if <= 10^(-4)
@@ -109,30 +123,41 @@ function log_spectral_range(u1ws::U1Nf)
     end
 end
 
-@info "10 FIRST THERMALIZATION STEPS WITH nsteps + 1 INTEGRATION STEPS"
-for i in 1:10
-    @info "THERM STEP $i"
-    @time sample!(model, samplerws)
-end
+if cntinue == true
+    @info "Skipping thermalization"
+else
+    @info "Starting thermalization"
 
-@info "REMAINING THERMALIZATION WITH nsteps INTEGRATION STEPS"
-smplr = HMC(integrator = integrator(tau, nsteps))
-samplerws = LFTSampling.sampler(model, smplr)
-
-for i in 11:ntherm
-    @info "THERM STEP $i"
-    @time sample!(model, samplerws)
-    W_N = LFTU1.reweighting_factor(model)
-    @info "W_N = $(W_N)"
-    if i%10 == 0
-        log_spectral_range(model)
+    @info "10 FIRST THERMALIZATION STEPS WITH nsteps + 1 INTEGRATION STEPS"
+    for i in 1:10
+        @info "THERM STEP $i"
+        @time sample!(model, samplerws)
     end
-    flush(logio)
+
+    @info "REMAINING THERMALIZATION WITH nsteps INTEGRATION STEPS"
+    smplr = HMC(integrator = integrator(tau, nsteps))
+    samplerws = LFTSampling.sampler(model, smplr)
+
+    for i in 11:ntherm
+        @info "THERM STEP $i"
+        @time sample!(model, samplerws)
+        W_N = LFTU1.reweighting_factor(model)
+        @info "W_N = $(W_N)"
+        if i%10 == 0
+            log_spectral_range(model)
+        end
+        flush(logio)
+    end
 end
 
-@info "Starting simulation"
 
-@time for i in 1:ntraj
+if cntinue == true
+    @info "Restarting simulation from trajectory $ncfgs"
+else
+    @info "Starting simulation"
+end
+
+@time for i in (ncfgs+1):(ncfgs+ntraj)
     @info "TRAJECTORY $i"
     for j in 1:discard
         @time sample!(model, samplerws)
@@ -149,5 +174,6 @@ end
     flush(Wio)
 end
 
+@info "Simulation finished succesfully"
 close(logio)
 close(Wio)
