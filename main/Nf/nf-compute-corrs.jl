@@ -7,18 +7,68 @@ using LFTU1
 using ProgressBars
 using Dates
 import LinearAlgebra.dot
-
-const MAXNFL = 2  # Example size, adjust as necessary
-const N0 = 24       # Example size, adjust as necessary
-const MAXNSRC = 10  # Example size, adjust as necessary
-nsrc = 10
+using ArgParse
 
 
-length(ARGS) == 1 || error("Only one argument is expected! (Path to input file)")
-isfile(ARGS[1]) || error("Path provided is not a file")
-cfile = ARGS[1]
+parse_commandline() = parse_commandline(ARGS)
+function parse_commandline(args)
+    s = ArgParseSettings()
+    @add_arg_table s begin
+        "-L"
+        help = "lattice size"
+        required = true
+        arg_type = Int
+        "--start"
+        help = "start from configuration"
+        required = false
+        arg_type = Int
+        default = 1
+        "--nconf"
+        help = "number of configurations to analyze; 0 means until the end"
+        required = false
+        arg_type = Int
+        default = 0
+        "--nsrc"
+        help = "number of sources"
+        required = false
+        arg_type = Int
+        default = 2
+        "--ens"
+        help = "path to ensemble with configurations"
+        required = true
+        arg_type = String
+        # default = "configs/"
+    end
+    return parse_args(args, s)
+end
 
-ncfgs = LFTSampling.count_configs(cfile)
+args = [
+"-L", "24",
+"--ens", "/home/david/git/dalbandea/phd/codes/6-LFTs/LFTModels/LFTU1.jl/trash/Nfsim-b4.0-L24-m[0.02, 0.02]_D2024-04-18-18-42-12.272/Nfsim-b4.0-L24-m[0.02, 0.02]_D2024-04-18-18-42-12.272.bdio",
+"--start", "2",
+"--nconf", "10",
+"--nsrc", "2",
+]
+parsed_args = parse_commandline(args)
+
+parsed_args = parse_commandline(ARGS)
+
+
+
+const NFL = 2  # number of flavors, hardcoded to be 2 by now
+const N0 = parsed_args["L"]
+const NSRC = parsed_args["nsrc"]
+
+cfile = parsed_args["ens"]
+isfile(cfile) || error("Path provided is not a file")
+
+start = parsed_args["start"]
+ncfgs = parsed_args["nconf"]
+if ncfgs == 0
+    ncfgs = LFTSampling.count_configs(cfile) - start + 1
+end
+finish = start + ncfgs - 1
+
 fb, model = read_cnfg_info(cfile, U1Nf)
 
 struct U1Correlator <: LFTU1.AbstractU1Correlator
@@ -140,11 +190,18 @@ end
 
 function save_data(data, dirpath)
     for ifl in 1:2, jfl in ifl:2
-        connfile = joinpath(dirpath,"conn-$ifl$jfl.txt")
-        discfile = joinpath(dirpath, "disc-$ifl$jfl.txt")
+        connfile = joinpath(dirpath,"measurements/conn-$ifl$(jfl)_confs$start-$finish.txt")
+        discfile = joinpath(dirpath, "measurements/disc-$ifl$(jfl)_confs$start-$finish.txt")
         write_vector(data.P[ifl, jfl, :],connfile)
         write_vector(data.disc[ifl, jfl, :],discfile)
     end
+end
+
+function save_topcharge(model, dirpath)
+    qfile = joinpath(dirpath,"measurements/topcharge_confs$start-$finish.txt")
+    global io_stat = open(qfile, "a")
+    write(io_stat, "$(top_charge(model))\n")
+    close(io_stat)
 end
 
 function write_vector(vec, filepath)
@@ -201,17 +258,21 @@ end
 
 data = (
     nc = 0,
-    P = zeros(Float64, MAXNFL, MAXNFL, N0),
-    disc = zeros(Float64, MAXNFL, MAXNFL, N0),
-    Delta = zeros(Float64, MAXNFL, MAXNSRC, N0)
+    P = zeros(Float64, NFL, NFL, N0),
+    disc = zeros(Float64, NFL, NFL, N0),
+    Delta = zeros(Float64, NFL, NSRC, N0)
 )
 
-
 pws = U1Correlator(model, wdir=dirname(cfile))
-for i in ProgressBar(1:ncfgs)
-    read_next_cnfg(fb, model)
-    correlators(data, pws, model, nsrc)
-    compute_disconnected!(data, nsrc)
+for i in ProgressBar(start:finish)
+    if i == start && start != 1
+        LFTSampling.read_cnfg_n(fb, start, model)
+    else
+        read_next_cnfg(fb, model)
+    end
+    correlators(data, pws, model, NSRC)
+    compute_disconnected!(data, NSRC)
     save_data(data, dirname(cfile))
+    save_topcharge(model, dirname(cfile))
 end
 close(fb)
