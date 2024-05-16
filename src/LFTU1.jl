@@ -90,6 +90,8 @@ export gamm5Dw!, gamm5Dw_sqr_msq!
 include("U1measurements.jl")
 export U1PionCorrelator, U1PCACCorrelator, invert_sources!
 
+include("U1correlators.jl")
+
 # to_device(::CUDAKernels.CUDADevice, x) = CUDA.CuArray(x)
 # to_device(::ROCKernels.ROCDevice, x) = AMDGPU.ROCArray(x)
 to_device(::KernelAbstractions.CPU, x) = x
