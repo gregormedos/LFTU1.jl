@@ -150,13 +150,14 @@ struct U1exCorrelator <: LFTU1.AbstractU1Correlator
         filepath = joinpath(wdir, mesdir, ID*wdir_sufix*extension)
         V = prod((u1ws.params.iL..., 2))
         gD = LFTU1.to_device(u1ws.device, zeros(complex(Float64), V, V))
-        invgD = copy(gD)
+        invgD1 = copy(gD)
+        invgD2 = copy(gD)
         e1 = LFTU1.to_device(u1ws.device, zeros(complex(Float64), lp.iL..., 2))
         e2 = copy(e1)
         C = zeros(Float64, lp.iL[1])
         history = []
         mkpath(dirname(filepath))
-        return new(name, ID, filepath, gD, [invgD, invgD], e1, e2, C, history)
+        return new(name, ID, filepath, gD, [invgD1, invgD2], e1, e2, C, history)
     end
 end
 export U1exCorrelator
