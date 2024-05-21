@@ -118,7 +118,7 @@ end
 function save_data(data::Data, dirpath)
     for ifl in 1:2
         deltafile = joinpath(dirpath, "measurements/exdelta-$(ifl)_confs$start-$finish.txt")
-        write_vector(data.delta[ifl, :],deltafile)
+        write_vector(data.Delta[ifl, :],deltafile)
         for jfl in ifl:2
             connfile = joinpath(dirpath,"measurements/exconn-$ifl$(jfl)_confs$start-$finish.txt")
             discfile = joinpath(dirpath, "measurements/exdisc-$ifl$(jfl)_confs$start-$finish.txt")
