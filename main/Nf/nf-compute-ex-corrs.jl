@@ -30,12 +30,6 @@ function parse_commandline(args)
         arg_type = Int
         default = 0
 
-        "--nsrc"
-        help = "number of sources"
-        required = false
-        arg_type = Int
-        default = 2
-
         "--ens"
         help = "path to ensemble with configurations"
         required = true
@@ -50,7 +44,6 @@ end
 # "--ens", "/home/david/git/dalbandea/phd/codes/6-LFTs/LFTModels/LFTU1.jl/trash/Nfsim-b4.0-L24-m[0.02, 0.02]_D2024-04-18-18-42-12.272/Nfsim-b4.0-L24-m[0.02, 0.02]_D2024-04-18-18-42-12.272.bdio",
 # "--start", "2",
 # "--nconf", "10",
-# "--nsrc", "2",
 # ]
 # parsed_args = parse_commandline(args)
 
@@ -123,11 +116,15 @@ function compute_disconnected!(data::Data)
 end
 
 function save_data(data::Data, dirpath)
-    for ifl in 1:2, jfl in ifl:2
-        connfile = joinpath(dirpath,"measurements/exconn-$ifl$(jfl)_confs$start-$finish.txt")
-        discfile = joinpath(dirpath, "measurements/exdisc-$ifl$(jfl)_confs$start-$finish.txt")
-        write_vector(data.P[ifl, jfl, :],connfile)
-        write_vector(data.disc[ifl, jfl, :],discfile)
+    for ifl in 1:2
+        deltafile = joinpath(dirpath, "measurements/exdelta-$(ifl)_confs$start-$finish.txt")
+        write_vector(data.delta[ifl, :],deltafile)
+        for jfl in ifl:2
+            connfile = joinpath(dirpath,"measurements/exconn-$ifl$(jfl)_confs$start-$finish.txt")
+            discfile = joinpath(dirpath, "measurements/exdisc-$ifl$(jfl)_confs$start-$finish.txt")
+            write_vector(data.P[ifl, jfl, :],connfile)
+            write_vector(data.disc[ifl, jfl, :],discfile)
+        end
     end
 end
 
