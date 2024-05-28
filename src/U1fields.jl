@@ -155,7 +155,7 @@ end
 function (s::Type{U1Nf})(::Type{T1}, ::Type{T2} = complex(T1); ns_rat = nothing,
                          r_as = nothing, r_bs = nothing, custom_init = nothing,
                          device = KernelAbstractions.CPU(), maxiter::Int64 =
-                         10000, tol::Float64 = 1e-30, kwargs...) where {T1, T2}
+                         10000, tol::Float64 = 1e-14, kwargs...) where {T1, T2}
     lp = U1NfParm(;kwargs...)
     
     if ns_rat == nothing
