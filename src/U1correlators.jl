@@ -74,7 +74,7 @@ function connected_correlator(corrws::U1Correlator, t, u1ws, ifl, jfl)
     for x in 1:lp.iL[1]
         a = corrws.R[jfl][x,t,:]
         b = corrws.R[ifl][x,t,:]
-        Ct += abs(dot(b,a)) / lp.iL[1]
+        Ct += real(dot(b,a)) / lp.iL[1]
     end
     LFTU1.disallowscalar(u1ws.device)
 
