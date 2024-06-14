@@ -113,6 +113,25 @@ function U1topcharge(plaquettes, U, beta, Nx, Ny, device, threads, blocks)
     return Q
 end
 
+function top_charge_density(U1ws::U1)
+    lp = U1ws.params
+    plaquettes = to_device(U1ws.device, zeros(Float64, lp.iL[1], lp.iL[2]))
+    top_charge_density!(plaquettes, U1ws)
+    return plaquettes
+end
+
+function top_charge_density!(plaquettes, U1ws::U1)
+    lp = U1ws.params
+    return top_charge_density!(plaquettes, U1ws.U, lp.beta, lp.iL[1], lp.iL[2], U1ws.device, U1ws.kprm.threads, U1ws.kprm.blocks)
+end
+
+function top_charge_density!(plaquettes, U, beta, Nx, Ny, device, threads, blocks)
+    event = U1qtop!(device)(plaquettes, U, Nx, Ny, ndrange=(Nx, Ny), workgroupsize=threads)
+    synchronize(device)
+    return nothing
+end
+export top_charge_density, top_charge_density!
+
 
 # ======================= #
 # ====== U1 Nf = 2 ====== #
