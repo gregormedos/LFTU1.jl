@@ -49,7 +49,7 @@ function gamm5Dw_sqr_msq!(so, tmp, si, U1ws::U1Nf2)
     return nothing
 end
 
-function gamm5Dw!(so, si, am0, U1ws::Union{U1Nf,U1Quenched})
+function gamm5Dw!(so, si, am0, U1ws::Union{U1Nf,U1Quenched,U1Nf2})
     lp = U1ws.params
     event = U1gamm5Dw!(U1ws.device)(so, U1ws.U, si, am0, lp.iL[1],
                                   lp.iL[2], ndrange=(lp.iL[1], lp.iL[2]),
@@ -58,7 +58,7 @@ function gamm5Dw!(so, si, am0, U1ws::Union{U1Nf,U1Quenched})
     return nothing
 end
 
-function gamm5Dw_sqr_msq!(so, tmp, si, am0, U1ws::Union{U1Nf,U1Quenched})
+function gamm5Dw_sqr_msq!(so, tmp, si, am0, U1ws::Union{U1Nf,U1Quenched,U1Nf2})
 
     gamm5Dw!(so, si, am0, U1ws)
     tmp .= so
