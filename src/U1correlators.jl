@@ -207,6 +207,29 @@ end
 export construct_gD!
 
 """
+It constructs γ₅D exactly for U1Quenched for a mass `mass`
+"""
+function construct_gD!(corrws, u1ws::U1Quenched, mass)
+    x1 = corrws.e1
+    x2 = corrws.e2
+    gD = corrws.gD
+    x1 .= 0.0
+    x2 .= 0.0
+    lsize = u1ws.params.iL[1]
+    for is in 1:2, il2 in 1:lsize, il1 in 1:lsize
+        ilinidx = linear_index(il1, il2, is, lsize, 2)
+        x1[ilinidx] = 1.0
+        gamm5Dw!(x2, x1, mass, u1ws)
+        for js in 1:2, jl2 in 1:lsize, jl1 in 1:lsize
+            jlinidx = linear_index(jl1, jl2, js, lsize, 2)
+            gD[jlinidx,ilinidx] = x2[jlinidx]
+        end
+        x1[ilinidx] = 0.0
+    end
+end
+export construct_gD!
+
+"""
 Builds inverse of γ₅D using LinearAlgebra.inv for flavor `ifl`
 """
 function get_invgD!(corrws, u1ws, ifl)
@@ -226,11 +249,32 @@ function construct_invgD!(corrws, u1ws::U1Nf, ifl)
 end
 
 """
+Constructs the inverse of γ₅D for a mass `mass`, storing it in `corrws.invgD[ifl]`. Inteded for use with U1Quenched only
+"""
+function construct_invgD!(corrws, u1ws::U1Quenched, ifl, mass)
+    construct_gD!(corrws, u1ws, mass)
+    get_invgD!(corrws, u1ws, ifl)
+    return nothing
+end
+
+"""
 Constructs the inverse of γ₅D for flavor `ifl`
 """
 function construct_invgD!(corrws, u1ws::U1Nf)
     for ifl in 1:2
         construct_gD!(corrws, u1ws, ifl)
+        get_invgD!(corrws, u1ws, ifl)
+    end
+    return nothing
+end
+export construct_invgD!
+
+"""
+Constructs the inverse of γ₅D for 2 flavors with mass `mass`. Inteded for use with U1Quenched only
+"""
+function construct_invgD!(corrws, u1ws::U1Quenched, mass)
+    for ifl in 1:2
+        construct_gD!(corrws, u1ws, mass)
         get_invgD!(corrws, u1ws, ifl)
     end
     return nothing
