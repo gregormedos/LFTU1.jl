@@ -186,7 +186,7 @@ export inverse_linear_index
 """
 It constructs γ₅D exactly for flavor `ifl`
 """
-function construct_gD!(corrws, u1ws, ifl)
+function construct_gD!(corrws, u1ws::U1Nf, ifl)
     x1 = corrws.e1
     x2 = corrws.e2
     gD = corrws.gD
@@ -219,7 +219,7 @@ export get_invgD!
 """
 Constructs the inverse of γ₅D for flavor `ifl`, storing it in `corrws.invgD[ifl]`
 """
-function construct_invgD!(corrws, u1ws, ifl)
+function construct_invgD!(corrws, u1ws::U1Nf, ifl)
     construct_gD!(corrws, u1ws, ifl)
     get_invgD!(corrws, u1ws, ifl)
     return nothing
@@ -228,7 +228,7 @@ end
 """
 Constructs the inverse of γ₅D for flavor `ifl`
 """
-function construct_invgD!(corrws, u1ws)
+function construct_invgD!(corrws, u1ws::U1Nf)
     for ifl in 1:2
         construct_gD!(corrws, u1ws, ifl)
         get_invgD!(corrws, u1ws, ifl)
