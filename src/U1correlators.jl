@@ -41,7 +41,7 @@ export U1Correlator
 """
 Generate complex random normal source at time slice t0 storing it to corrws.S0, and solve γ₅D corrws.R[ifl] = corrws.S0 for each flavor ifl.
 """
-function random_source(t0, corrws, u1ws)
+function random_source(t0, corrws, u1ws::U1Nf)
     S0 = corrws.S0
     S = corrws.S
     R = corrws.R
@@ -52,6 +52,27 @@ function random_source(t0, corrws, u1ws)
         ## Solve g5D R = S0 for S for Flavor ifl
         iter = LFTU1.invert!(S, LFTU1.gamm5Dw_sqr_msq_am0!(u1ws.params.am0[ifl]), S0, u1ws.sws, u1ws)
         gamm5Dw!(R[ifl], S, u1ws.params.am0[ifl], u1ws)
+    end
+    return nothing
+end
+export random_source
+
+"""
+Generate complex random normal source at time slice t0 storing it to corrws.S0,
+and solve γ₅D corrws.R[ifl] = corrws.S0 for each flavor ifl. Intended for use
+with U1Nf2 only
+"""
+function random_source(t0, corrws, u1ws::U1Nf2)
+    S0 = corrws.S0
+    S = corrws.S
+    R = corrws.R
+    lp = u1ws.params
+    S0 .= zero(ComplexF64)
+    S0[:,t0,:] .= randn(ComplexF64, lp.iL[1],2)
+    for ifl in 1:2
+        ## Solve g5D R = S0 for S for Flavor ifl
+        iter = LFTU1.invert!(S, LFTU1.gamm5Dw_sqr_msq_am0!(u1ws.params.am0), S0, u1ws.sws, u1ws)
+        gamm5Dw!(R[ifl], S, u1ws.params.am0, u1ws)
     end
     return nothing
 end
