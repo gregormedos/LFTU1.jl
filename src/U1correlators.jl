@@ -300,9 +300,14 @@ function construct_invgD!(corrws, u1ws::U1Nf2)
 end
 export construct_invgD!
 
-"""
+raw"""
 Computes 1/N0 ∑_n,m tr[γ₅D⁻¹_ifl(n,t|m,t₀) γ₅D⁻¹_jfl(m,t₀|n,t)] with source at
 time slice `t` and sink at time slice `t0`. (tr is over spin)
+    --------                 *(n,t)     *(n,t)--
+  /          \              /  \        |        \
+ *(n,t)       *(m,t₀)  or  |    |   or   \         \
+  \          /              \  /           \        |
+    --------                 *(m,t₀)         -------*(m,t₀)
 """
 function ex_connected_correlator_t0(corrws, t, t0, u1ws, ifl, jfl)
     gDinv1 = corrws.invgD[ifl]
@@ -324,9 +329,23 @@ function ex_connected_correlator(corrws, u1ws, t0, ifl, jfl)
 end
 export ex_connected_correlator
 
+function ex_spatially_connected_correlator(corrws, u1ws, ifl, jfl)
+    lp = u1ws.params
+    for t in 1:lp.iL[1]
+        corrws.result[t] = ex_connected_correlator_t0(corrws, t, t, u1ws, ifl, jfl) |> real
+    end
+end
+export ex_spatially_connected_correlator
 
-"""
+
+raw"""
 Computes 1/√N0 ∑_n tr[γ₅D⁻¹_ifl(n,t|n,t)] at time slice `t`. (tr is over spin)
+
+   -*(n,t)
+ /    \
+|      |
+ \    /
+   --
 """
 function ex_disconnected_correlator_t0(corrws::U1exCorrelator, t, u1ws, ifl)
     gDinv = corrws.invgD[ifl]
@@ -346,3 +365,87 @@ function ex_disconnected_correlator(corrws, u1ws, ifl)
     end
 end
 export ex_disconnected_correlator
+
+
+raw"""
+Computes 1/N0^2 ∑_n1,n2,n3,n4 tr[γ₅D⁻¹_ifl1(n1,t1|n2,t2) γ₅D⁻¹_ifl2(n2,n2|n3,t3) γ₅D⁻¹_ifl3(n3,t3|n4,t4) γ₅D⁻¹_ifl4(n4,t4|n1,t1)]. (tr is over spin)
+
+*(n4,t4)-------*(n3,t3)     *(n4,t4)     *(n2,t2)     *(n3,t3)-----*(n2,t2)     
+|              |            |  \        /|               \        /            
+|              |            |    \   /   |                 \   /               
+|              |       or   |      \     |       or          \                 
+|              |            |    /   \   |                 /   \                
+|              |            | /        \ |              /        \             
+*(n1,t1)-------*(n2,t2)     *(n1,t1)     *(n3,t3)     *(n1,t1)-----*(n4,t4)     
+"""
+function ex_4point_connected_correlator_t0(corrws, t1, t2, t3, t4, u1ws, ifl1, ifl2, ifl3, ifl4)
+    gDinv1 = corrws.invgD[ifl1]
+    gDinv2 = corrws.invgD[ifl2]
+    gDinv3 = corrws.invgD[ifl3]
+    gDinv4 = corrws.invgD[ifl4]
+    lsize = u1ws.params.iL[1]
+    Ct = 0.0
+    for (is1, is2, is3, is4, iln4, iln3, iln2, iln1) in Iterators.product(1:2, 1:2, 1:2, 1:2, 1:lsize, 1:lsize, 1:lsize, 1:lsize)
+        Ct += (gDinv1[linear_index(iln1, t1, is1, lsize, 2), linear_index(iln2, t2, is2, lsize, 2)]
+            * gDinv2[linear_index(iln2, t2, is2, lsize, 2), linear_index(iln3, t3, is3, lsize, 2)]
+            * gDinv3[linear_index(iln3, t3, is3, lsize, 2), linear_index(iln4, t4, is4, lsize, 2)]
+            * gDinv4[linear_index(iln4, t4, is4, lsize, 2), linear_index(iln1, t1, is1, lsize, 2)]
+            / lsize^2
+        )
+    end
+    return Ct
+end
+export ex_4point_connected_correlator_t0
+
+function ex_4point_connected_correlator(corrws, u1ws, t0, ifl1, ifl2, ifl3, ifl4)
+    lp = u1ws.params
+    for t in 1:lp.iL[1]
+        corrws.result[t] = ex_4point_connected_correlator_t0(corrws, t, t0, t0, t, u1ws, ifl1, ifl2, ifl3, ifl4) |> real
+    end
+end
+export ex_4point_connected_correlator
+
+
+raw"""
+Computes 1/√N0^3 ∑_n1,n2,n3 tr[γ₅D⁻¹_ifl1(n1,t1|n2,t2) γ₅D⁻¹_ifl2(n2,n2|n3,t3) γ₅D⁻¹_ifl3(n3,t3|n1,t1)]. (tr is over spin)
+
+               *(n3,t3)     *(n2,t2)     
+              /|            |  \                  
+           /   |            |    \       
+        /      |       or   |      \     
+     /         |            |        \   
+  /            |            |          \ 
+*(n1,t1)-------*(n2,t2)     *(n1,t1)----*(n3,t3)     
+"""
+function ex_3point_connected_correlator_t0(corrws, t1, t2, t3, u1ws, ifl1, ifl2, ifl3)
+    gDinv1 = corrws.invgD[ifl1]
+    gDinv2 = corrws.invgD[ifl2]
+    gDinv3 = corrws.invgD[ifl3]
+    lsize = u1ws.params.iL[1]
+    Ct = 0.0
+    for (is1, is2, is3, iln3, iln2, iln1) in Iterators.product(1:2, 1:2, 1:2, 1:lsize, 1:lsize, 1:lsize)
+        Ct += (gDinv1[linear_index(iln1, t1, is1, lsize, 2), linear_index(iln2, t2, is2, lsize, 2)]
+            * gDinv2[linear_index(iln2, t2, is2, lsize, 2), linear_index(iln3, t3, is3, lsize, 2)]
+            * gDinv3[linear_index(iln3, t3, is3, lsize, 2), linear_index(iln1, t1, is1, lsize, 2)]
+            / sqrt(lsize)^3
+        )
+    end
+    return Ct
+end
+export ex_3point_connected_correlator_t0
+
+function ex_3point_initially_connected_correlator(corrws, u1ws, t0, ifl1, ifl2, ifl3)
+    lp = u1ws.params
+    for t in 1:lp.iL[1]
+        corrws.result[t] = ex_3point_connected_correlator_t0(corrws, t, t, t0, u1ws, ifl1, ifl2, ifl3) |> real
+    end
+end
+export ex_3point_initially_connected_correlator
+
+function ex_3point_finally_connected_correlator(corrws, u1ws, t0, ifl1, ifl2, ifl3)
+    lp = u1ws.params
+    for t in 1:lp.iL[1]
+        corrws.result[t] = ex_3point_connected_correlator_t0(corrws, t, t0, t0, u1ws, ifl1, ifl2, ifl3) |> real
+    end
+end
+export ex_3point_finally_connected_correlator
