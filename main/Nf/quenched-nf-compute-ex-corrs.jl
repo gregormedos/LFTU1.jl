@@ -46,7 +46,7 @@ end
 args = [
 "-L", "20",
 "--mass", "0.05",
-"--ens", "01_Q2/main.bdio",
+"--ens", "01_beta5_lsize20_PBC_tau1_nsteps10/main.bdio",
 "--start", "500",
 "--nconf", "1000",
 ]
