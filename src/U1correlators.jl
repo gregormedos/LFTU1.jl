@@ -397,10 +397,18 @@ function ex_4point_connected_correlator_t0(corrws, t1, t2, t3, t4, u1ws, ifl1, i
 end
 export ex_4point_connected_correlator_t0
 
-function ex_4point_connected_correlator(corrws, u1ws, t0, ifl1, ifl2, ifl3, ifl4)
+function ex_4point_connected_correlator_tt0t0t(corrws, u1ws, t0, ifl1, ifl2, ifl3, ifl4)
     lp = u1ws.params
     for t in 1:lp.iL[1]
         corrws.result[t] = ex_4point_connected_correlator_t0(corrws, t, t0, t0, t, u1ws, ifl1, ifl2, ifl3, ifl4) |> real
+    end
+end
+export ex_4point_connected_correlator
+
+function ex_4point_connected_correlator_tt0tt0(corrws, u1ws, t0, ifl1, ifl2, ifl3, ifl4)
+    lp = u1ws.params
+    for t in 1:lp.iL[1]
+        corrws.result[t] = ex_4point_connected_correlator_t0(corrws, t, t0, t, t0, u1ws, ifl1, ifl2, ifl3, ifl4) |> real
     end
 end
 export ex_4point_connected_correlator
