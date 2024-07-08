@@ -321,21 +321,21 @@ function ex_connected_correlator_t0(corrws, t, t0, u1ws, ifl, jfl)
 end
 export ex_connected_correlator_t0
 
-function ex_connected_correlator(corrws, u1ws, t0, ifl, jfl)
+function ex_connected_correlator_tt0(corrws, u1ws, t0, ifl, jfl)
     lp = u1ws.params
     for t in 1:lp.iL[1]
         corrws.result[t] = ex_connected_correlator_t0(corrws, t, t0, u1ws, ifl, jfl) |> real
     end
 end
-export ex_connected_correlator
+export ex_connected_correlator_tt0
 
-function ex_spatially_connected_correlator(corrws, u1ws, ifl, jfl)
+function ex_connected_correlator_tt(corrws, u1ws, ifl, jfl)
     lp = u1ws.params
     for t in 1:lp.iL[1]
         corrws.result[t] = ex_connected_correlator_t0(corrws, t, t, u1ws, ifl, jfl) |> real
     end
 end
-export ex_spatially_connected_correlator
+export ex_spatially_connected_correlator_tt
 
 
 raw"""
@@ -397,13 +397,13 @@ function ex_4point_connected_correlator_t0(corrws, t1, t2, t3, t4, u1ws, ifl1, i
 end
 export ex_4point_connected_correlator_t0
 
-function ex_4point_connected_correlator_tt0t0t(corrws, u1ws, t0, ifl1, ifl2, ifl3, ifl4)
+function ex_4point_connected_correlator_ttt0t0(corrws, u1ws, t0, ifl1, ifl2, ifl3, ifl4)
     lp = u1ws.params
     for t in 1:lp.iL[1]
-        corrws.result[t] = ex_4point_connected_correlator_t0(corrws, t, t0, t0, t, u1ws, ifl1, ifl2, ifl3, ifl4) |> real
+        corrws.result[t] = ex_4point_connected_correlator_t0(corrws, t, t, t0, t0, u1ws, ifl1, ifl2, ifl3, ifl4) |> real
     end
 end
-export ex_4point_connected_correlator
+export ex_4point_connected_correlator_ttt0t0
 
 function ex_4point_connected_correlator_tt0tt0(corrws, u1ws, t0, ifl1, ifl2, ifl3, ifl4)
     lp = u1ws.params
@@ -411,7 +411,7 @@ function ex_4point_connected_correlator_tt0tt0(corrws, u1ws, t0, ifl1, ifl2, ifl
         corrws.result[t] = ex_4point_connected_correlator_t0(corrws, t, t0, t, t0, u1ws, ifl1, ifl2, ifl3, ifl4) |> real
     end
 end
-export ex_4point_connected_correlator
+export ex_4point_connected_correlator_tt0tt0
 
 
 raw"""
@@ -442,18 +442,10 @@ function ex_3point_connected_correlator_t0(corrws, t1, t2, t3, u1ws, ifl1, ifl2,
 end
 export ex_3point_connected_correlator_t0
 
-function ex_3point_initially_connected_correlator(corrws, u1ws, t0, ifl1, ifl2, ifl3)
+function ex_3point_connected_correlator_ttt0(corrws, u1ws, t0, ifl1, ifl2, ifl3)
     lp = u1ws.params
     for t in 1:lp.iL[1]
         corrws.result[t] = ex_3point_connected_correlator_t0(corrws, t, t, t0, u1ws, ifl1, ifl2, ifl3) |> real
     end
 end
-export ex_3point_initially_connected_correlator
-
-function ex_3point_finally_connected_correlator(corrws, u1ws, t0, ifl1, ifl2, ifl3)
-    lp = u1ws.params
-    for t in 1:lp.iL[1]
-        corrws.result[t] = ex_3point_connected_correlator_t0(corrws, t, t0, t0, u1ws, ifl1, ifl2, ifl3) |> real
-    end
-end
-export ex_3point_finally_connected_correlator
+export ex_3point_connected_correlator_ttt0
