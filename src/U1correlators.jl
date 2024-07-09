@@ -335,7 +335,7 @@ function ex_connected_correlator_tt(corrws, u1ws, ifl, jfl)
         corrws.result[t] = ex_connected_correlator_t0(corrws, t, t, u1ws, ifl, jfl) |> real
     end
 end
-export ex_spatially_connected_correlator_tt
+export ex_connected_correlator_tt
 
 
 raw"""

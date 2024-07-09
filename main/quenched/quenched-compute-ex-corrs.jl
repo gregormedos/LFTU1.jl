@@ -46,7 +46,7 @@ end
 args = [
 "-L", "20",
 "--mass", "0.05",
-"--ens", "01_beta5_lsize20_PBC_tau1_nsteps10/main.bdio",
+"--ens", "quenched_beta5.0_lsize20_PBC_tau1.0_nsteps10/main.bdio",
 "--start", "500",
 "--nconf", "1000",
 ]
@@ -96,12 +96,12 @@ function reset_data(data::Data)
     data.C .= 0.0
     data.D .= 0.0
     data.VV .= 0.0
-    V .= 0.0
+    data.V .= 0.0
     # data.R_1Delta_t0 .= 0.0
     # data.D_2Delta_tt0 .= 0.0
     # data.VV_2Delta_tt .= 0.0
-    # V_2Delta_tt .= 0.0
-    # disc4 .= 0.0
+    # data.V_2Delta_tt .= 0.0
+    # data.disc4 .= 0.0
     return nothing
 end
 
@@ -120,7 +120,7 @@ function correlators(data::Data, corrws::U1exCorrelator, u1ws)
         data.Delta[ifl,:] .+= corrws.result
         for jfl in 1:NFL
             for t0 in 1:N0
-                ex_connected_correlator(corrws, u1ws, t0, ifl, jfl)
+                ex_connected_correlator_tt0(corrws, u1ws, t0, ifl, jfl)
                 for t in 1:N0
                     tt=((t-t0+N0)%N0+1);
                     data.P[ifl,jfl,tt] += corrws.result[t] / N0
@@ -132,29 +132,29 @@ function correlators(data::Data, corrws::U1exCorrelator, u1ws)
 
     for ifl1 in 1:NFL
         for ifl2 in 1:NFL
-            corrws.history = []
+            traces = []
             ex_connected_correlator_tt(corrws, u1ws, ifl1, ifl2)
             data.V[ifl1,ifl2,:] .+= corrws.result
             for t0 in 1:N0
-                ex_connected_correlator(corrws, u1ws, t0, ifl1, ifl2)
-                push!(corrws.history, corrws.result)
+                ex_connected_correlator_tt0(corrws, u1ws, t0, ifl1, ifl2)
+                push!(traces, corrws.result)
             end
             for ifl3 in 1:NFL
                 for ifl4 in 1:NFL
                     for t0 in 1:N0
-                        ex_connected_correlator(corrws, u1ws, t0, ifl3, ifl4)
+                        ex_connected_correlator_tt0(corrws, u1ws, t0, ifl3, ifl4)
                         for t in 1:N0
-                            tt=((t-it+N0)%N0+1);
-                            data.D[ifl1,ifl2,ifl3,ifl4,tt] += corrws.result[t] * corrws.history[t0][t] / N0
+                            tt=((t-t0+N0)%N0+1);
+                            data.D[ifl1,ifl2,ifl3,ifl4,tt] += corrws.result[t] * traces[t0][t] / N0
                         end
-                        ex_4point_connected_correlator_tt0t0t(corrws, u1ws, t0, ifl1, ifl2, ifl3, ifl4)
+                        ex_4point_connected_correlator_ttt0t0(corrws, u1ws, t0, ifl1, ifl2, ifl3, ifl4)
                         for t in 1:N0
-                            tt=((t-it+N0)%N0+1);
+                            tt=((t-t0+N0)%N0+1);
                             data.R[ifl1,ifl2,ifl3,ifl4,tt] += corrws.result[t] / N0
                         end
                         ex_4point_connected_correlator_tt0tt0(corrws, u1ws, t0, ifl1, ifl2, ifl3, ifl4)
                         for t in 1:N0
-                            tt=((t-it+N0)%N0+1);
+                            tt=((t-t0+N0)%N0+1);
                             data.C[ifl1,ifl2,ifl3,ifl4,tt] += corrws.result[t] / N0
                         end
                     end
