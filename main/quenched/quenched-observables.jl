@@ -11,12 +11,6 @@ default(legend = false)
 using LaTeXStrings
 import HDF5
 
-# Look at the action and other observables to decide
-thermalization_steps = 500
-
-# Configurations
-filename = "main"
-
 
 function calculate_observable_ensemble(observable, ens)
     observable_ensemble = zeros(Float64, length(ens))
@@ -42,6 +36,11 @@ function block_average(observable_ensemble, nblocks)
 end
 
 
+# Look at the action and other observables to decide
+thermalization_steps = 500
+
+# Configurations
+filename = "main"
 ens = LFTSampling.read_ensemble(joinpath(@__DIR__, filename*".bdio"), U1Quenched)
 println()
 
