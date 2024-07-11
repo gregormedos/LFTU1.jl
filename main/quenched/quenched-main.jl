@@ -43,7 +43,6 @@ end
 # Read model parameters
 
 beta = pdata["Model params"]["beta"]
-mass = pdata["Model params"]["mass"]
 lsize = pdata["Model params"]["L"]
 BC = eval(Meta.parse(pdata["Model params"]["BC"]))
 
