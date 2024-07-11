@@ -2,6 +2,7 @@
 beta = 4.0
 mass = 0.02
 L = 24
+T = 48
 BC = 'PeriodicBC'
 device = "CPU"
 

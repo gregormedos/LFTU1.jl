@@ -1,6 +1,7 @@
 ["Model params"]
 beta = 4.0
 L = 24
+T = 48
 BC = 'PeriodicBC'
 device = "CPU"
 

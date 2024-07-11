@@ -44,6 +44,7 @@ end
 
 beta = pdata["Model params"]["beta"]
 lsize = pdata["Model params"]["L"]
+tsize = pdata["Model params"]["T"]
 BC = eval(Meta.parse(pdata["Model params"]["BC"]))
 
 # Read HMC parameters
@@ -65,7 +66,7 @@ cntfile = pdata["Working directory"]["cntfile"]
 model = U1Quenched(
               Float64, 
               beta = beta, 
-              iL = (lsize, lsize), 
+              iL = (lsize, tsize), 
               BC = PeriodicBC,
               device = device,
              )

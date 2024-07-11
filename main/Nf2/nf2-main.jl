@@ -45,6 +45,7 @@ end
 beta = pdata["Model params"]["beta"]
 mass = pdata["Model params"]["mass"]
 lsize = pdata["Model params"]["L"]
+tsize = pdata["Model params"]["T"]
 BC = eval(Meta.parse(pdata["Model params"]["BC"]))
 
 # Read HMC parameters
@@ -67,7 +68,7 @@ model = U1Nf2(
               Float64, 
               beta = beta, 
               am0 = mass, 
-              iL = (lsize, lsize), 
+              iL = (lsize, tsize), 
               BC = PeriodicBC,
               device = device,
              )
