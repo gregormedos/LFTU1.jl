@@ -32,7 +32,7 @@ using Logging
 function create_simulation_directory(wdir::String, u1ws::U1Nf2)
     dt = Dates.now()
     wdir_sufix = "_D"*Dates.format(dt, "yyyy-mm-dd-HH-MM-SS.ss")
-    fname = "Nf2sim-b$(u1ws.params.beta)-L$(model.params.iL[1])-m$(u1ws.params.am0)"*wdir_sufix
+    fname = "Nf2sim-b$(u1ws.params.beta)-L$(model.params.iL[1])-T$(model.params.iL[2])-m$(u1ws.params.am0)"*wdir_sufix
     fdir = joinpath(wdir, fname)
     configfile = joinpath(fdir, fname*".bdio")
     mkpath(fdir)
