@@ -125,7 +125,7 @@ end
 
 # Configurations
 filename = "main"
-fb, model = read_cnfg_info(joinpath(@__DIR__, filename*".bdio"), U1Quenched)
+fb, model = read_cnfg_info(joinpath(@__DIR__, filename*".bdio"), U1Nf2)
 tsize = model.params.iL[2]
 temporal_sites = [1:tsize;]
 
