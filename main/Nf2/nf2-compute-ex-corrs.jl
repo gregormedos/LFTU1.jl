@@ -22,11 +22,6 @@ function parse_commandline(args)
         required = true
         arg_type = Int
 
-        "--mass"
-        help = "mass"
-        required = true
-        arg_type = Float64
-
         "--start"
         help = "start from configuration"
         required = false
@@ -51,7 +46,6 @@ end
 args = [
 "-L", "40",
 "-T", "48",
-"--mass", "-0.03",
 "--ens", "",
 "--start", "500",
 "--nconf", "1000",
@@ -64,7 +58,6 @@ parsed_args = parse_commandline(args)
 const NFL = 1  # number of flavors, hardcoded to be 1 for now
 const NL0 = parsed_args["L"]
 const NT0 = parsed_args["T"]
-const MASS = parsed_args["mass"]
 
 cfile = parsed_args["ens"]
 isfile(cfile) || error("Path provided is not a file")
@@ -246,7 +239,7 @@ for i in ProgressBar(start:finish)
     else
         read_next_cnfg(fb, model)
     end
-    construct_invgD!(pws, model, MASS)
+    construct_invgD!(pws, model)
     correlators(data, pws, model)
     save_data(data, dirname(cfile))
     save_topcharge(model, dirname(cfile))
