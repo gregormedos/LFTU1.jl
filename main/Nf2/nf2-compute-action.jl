@@ -47,7 +47,7 @@ if ncfgs == 0
 end
 finish = start + ncfgs - 1
 
-function save_observable(model, dirpath)
+function save_action(model, dirpath)
     qfile = joinpath(dirpath,"action$start-$finish.txt")
     global io_stat = open(qfile, "a")
     write(io_stat, "$(action(model))\n")
