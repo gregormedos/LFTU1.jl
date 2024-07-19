@@ -3,9 +3,6 @@ import Pkg
 Pkg.activate(".")
 using LFTSampling
 using LFTU1
-using ProgressBars
-using Dates
-import LinearAlgebra.dot
 using ArgParse
 
 parse_commandline() = parse_commandline(ARGS)
@@ -39,11 +36,6 @@ args = [
 "--nconf", "1000",
 ]
 parsed_args = parse_commandline(args)
-
-const NFL = 1  # number of flavors, hardcoded to be 1 for now
-const NL0 = parsed_args["L"]
-const NT0 = parsed_args["T"]
-const MASS = parsed_args["mass"]
 
 cfile = parsed_args["ens"]
 isfile(cfile) || error("Path provided is not a file")
