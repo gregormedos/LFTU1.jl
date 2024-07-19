@@ -50,7 +50,7 @@ finish = start + ncfgs - 1
 function save_action(model, dirpath)
     qfile = joinpath(dirpath,"action$start-$finish.txt")
     global io_stat = open(qfile, "a")
-    write(io_stat, "$(action(model))\n")
+    write(io_stat, "$(LFTU1.gauge_action(model))\n")
     close(io_stat)
 end
 
