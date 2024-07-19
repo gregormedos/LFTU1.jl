@@ -55,7 +55,7 @@ function save_observable(model, dirpath)
 end
 
 fb, model = read_cnfg_info(cfile, U1Nf2)
-for i in ProgressBar(start:finish)
+for i in start:finish
     if i == start && start != 1
         LFTSampling.read_cnfg_n(fb, start, model)
     else
