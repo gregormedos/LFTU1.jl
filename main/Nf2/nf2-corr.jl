@@ -47,7 +47,7 @@ end
 function get_2pion_isospin2_channel_correlation_function(traces_timeslices)
     exD1111_timeslices = traces_timeslices[1]
     exC1111_timeslices = traces_timeslices[2]
-    result = 2 * (exD1111_timeslices - exC1111_timeslices)
+    result = 2 .* (exD1111_timeslices .- exC1111_timeslices)
     for t in 1:tsize
         ADerrors.uwerr(result[t])
     end
