@@ -389,12 +389,20 @@ function ex_4point_connected_correlator_t0(corrws, t1, t2, t3, t4, u1ws, ifl1, i
     lsize = u1ws.params.iL[1]
     tsize = u1ws.params.iL[2]
     Ct = 0.0
-    for (is1, is2, is3, is4, iln4, iln3, iln2, iln1) in Iterators.product(1:2, 1:2, 1:2, 1:2, 1:lsize, 1:lsize, 1:lsize, 1:lsize)
-        Ct += (gDinv1[linear_index(iln1, t1, is1, lsize, tsize, 2), linear_index(iln2, t2, is2, lsize, tsize, 2)]
-            * gDinv2[linear_index(iln2, t2, is2, lsize, tsize, 2), linear_index(iln3, t3, is3, lsize, tsize, 2)]
-            * gDinv3[linear_index(iln3, t3, is3, lsize, tsize, 2), linear_index(iln4, t4, is4, lsize, tsize, 2)]
-            * gDinv4[linear_index(iln4, t4, is4, lsize, tsize, 2), linear_index(iln1, t1, is1, lsize, tsize, 2)]
-            / lsize^2
+    # for (is1, is2, is3, is4, iln4, iln3, iln2, iln1) in Iterators.product(1:2, 1:2, 1:2, 1:2, 1:lsize, 1:lsize, 1:lsize, 1:lsize)
+    #     Ct += (gDinv1[linear_index(iln1, t1, is1, lsize, tsize, 2), linear_index(iln2, t2, is2, lsize, tsize, 2)]
+    #         * gDinv2[linear_index(iln2, t2, is2, lsize, tsize, 2), linear_index(iln3, t3, is3, lsize, tsize, 2)]
+    #         * gDinv3[linear_index(iln3, t3, is3, lsize, tsize, 2), linear_index(iln4, t4, is4, lsize, tsize, 2)]
+    #         * gDinv4[linear_index(iln4, t4, is4, lsize, tsize, 2), linear_index(iln1, t1, is1, lsize, tsize, 2)]
+    #         / lsize^2
+    #     )
+    # end
+    for (is1, is2, is3, is4, iln1) in Iterators.product(1:2, 1:2, 1:2, 1:2, 1:lsize)
+        Ct += (gDinv1[linear_index(iln1, t1, is1, lsize, tsize, 2), linear_index(1, t2, is2, lsize, tsize, 2)]
+            * gDinv2[linear_index(1, t2, is2, lsize, tsize, 2), linear_index(1, t3, is3, lsize, tsize, 2)]
+            * gDinv3[linear_index(1, t3, is3, lsize, tsize, 2), linear_index(1, t4, is4, lsize, tsize, 2)]
+            * gDinv4[linear_index(1, t4, is4, lsize, tsize, 2), linear_index(iln1, t1, is1, lsize, tsize, 2)]
+            / sqrt(lsize)
         )
     end
     return Ct
